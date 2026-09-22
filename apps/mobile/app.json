@@ -11,6 +11,7 @@
     },
     "ios": { "supportsTablet": false },
     "android": {},
-    "web": { "bundler": "metro" }
+    "web": { "bundler": "metro" },
+    "plugins": ["react-native-track-player"]
   }
 }
