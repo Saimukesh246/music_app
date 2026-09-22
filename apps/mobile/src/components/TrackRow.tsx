@@ -5,6 +5,7 @@ import { getQualityLabel } from "./QualityBadge";
 import { useLibraryStore } from "../store/libraryStore";
 
 function formatDuration(sec: number): string {
+  if (!sec) return "--:--";
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60)
     .toString()

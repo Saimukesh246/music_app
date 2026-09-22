@@ -59,4 +59,9 @@ describe("QualityBadge", () => {
     expect(screen.getByText("Lossy")).toBeTruthy();
     expect(screen.getByText("MP3 · 320 kbps")).toBeTruthy();
   });
+
+  it("renders an Unknown badge for unparseable audio", () => {
+    render(<QualityBadge quality={{ format: "UNKNOWN", durationSec: 0 }} />);
+    expect(screen.getByText("Unknown")).toBeTruthy();
+  });
 });

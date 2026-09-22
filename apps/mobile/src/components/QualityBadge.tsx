@@ -1,16 +1,9 @@
 import { View, Text, StyleSheet } from "react-native";
 import type { AudioQualityInfo, QualityLabel } from "@aura/types";
+import { getQualityLabel } from "@aura/shared";
 import { colors, spacing, radii, typography } from "../theme/tokens";
 
-const LOSSLESS_FORMATS = new Set(["FLAC", "ALAC", "WAV"]);
-
-export function getQualityLabel(quality: AudioQualityInfo): QualityLabel {
-  if (quality.format === "UNKNOWN") return "Unknown";
-  if (!LOSSLESS_FORMATS.has(quality.format)) return "Lossy";
-  const isHiRes =
-    (quality.bitDepth ?? 0) > 16 || (quality.sampleRateHz ?? 0) > 44100;
-  return isHiRes ? "Hi-Res Lossless" : "Lossless";
-}
+export { getQualityLabel };
 
 function formatDetail(quality: AudioQualityInfo): string {
   if (quality.bitDepth && quality.sampleRateHz) {
