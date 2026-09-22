@@ -12,6 +12,7 @@ export function setupPlayer(): Promise<void> {
         android: {
           appKilledPlaybackBehavior:
             AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+          alwaysPauseOnInterruption: true,
         },
         capabilities: [
           Capability.Play,
