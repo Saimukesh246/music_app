@@ -4,6 +4,8 @@ import { colors, spacing, typography } from "../theme/tokens";
 import { scanMusicFolder } from "../library/scanner";
 import { getLibraryDb } from "../providers";
 import { useLibraryStore } from "../store/libraryStore";
+import { enrichLibrary } from "../metadata/enrichment";
+import { useLibraryVersionStore } from "../store/libraryVersionStore";
 
 interface SettingsRow {
   label: string;
@@ -54,7 +56,9 @@ export function SettingsScreen() {
   }
 
   const [scanning, setScanning] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const hydrateFavorites = useLibraryStore((s) => s.hydrate);
+  const bumpLibraryVersion = useLibraryVersionStore((s) => s.bump);
 
   async function handleScan() {
     setScanning(true);
@@ -63,6 +67,7 @@ export function SettingsScreen() {
       const result = await scanMusicFolder(db);
       if (!result.cancelled) {
         hydrateFavorites();
+        bumpLibraryVersion();
         Alert.alert(
           "Scan complete",
           `${result.imported} file${result.imported === 1 ? "" : "s"} imported` +
@@ -70,11 +75,32 @@ export function SettingsScreen() {
               ? `, ${result.unreadable} could not be read and are listed as Unknown quality.`
               : ".")
         );
+        void handleEnrich();
       }
     } catch (error) {
       Alert.alert("Scan failed", "Could not read that folder. Please try again.");
     } finally {
       setScanning(false);
+    }
+  }
+
+  async function handleEnrich() {
+    setEnriching(true);
+    try {
+      const db = await getLibraryDb();
+      const result = await enrichLibrary(db);
+      bumpLibraryVersion();
+      if (result.enriched > 0 || result.skipped > 0) {
+        Alert.alert(
+          "Enrichment complete",
+          `${result.enriched} album${result.enriched === 1 ? "" : "s"} enriched` +
+            (result.skipped > 0 ? `, ${result.skipped} skipped.` : ".")
+        );
+      }
+    } catch (error) {
+      Alert.alert("Enrichment failed", "Could not fetch metadata. Please try again.");
+    } finally {
+      setEnriching(false);
     }
   }
 
@@ -96,6 +122,11 @@ export function SettingsScreen() {
         <Pressable style={styles.row} onPress={handleScan} disabled={scanning}>
           <Text style={typography.body}>
             {scanning ? "Scanning…" : "Scan Music Folder"}
+          </Text>
+        </Pressable>
+        <Pressable style={styles.row} onPress={handleEnrich} disabled={enriching}>
+          <Text style={typography.body}>
+            {enriching ? "Enriching…" : "Enrich Metadata"}
           </Text>
         </Pressable>
       </View>
