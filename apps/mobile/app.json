@@ -10,8 +10,9 @@
       "backgroundColor": "#0A0A0C"
     },
     "ios": { "supportsTablet": false },
-    "android": {},
-    "web": { "bundler": "metro" },
-    "plugins": ["react-native-track-player"]
+    "android": {
+      "permissions": ["POST_NOTIFICATIONS"]
+    },
+    "web": { "bundler": "metro" }
   }
 }
