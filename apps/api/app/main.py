@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 
-from app.routers import auth, catalog
+from app.routers import auth, catalog, search
 
 app = FastAPI(title="AURA API")
 app.include_router(auth.router)
 app.include_router(catalog.router)
+app.include_router(search.router)
 
 
 @app.get("/health")
