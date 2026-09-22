@@ -15,3 +15,5 @@ export { getLyrics } from "./lyrics/lrclib";
 export type { LyricsMatch, GetLyricsInput } from "./lyrics/lrclib";
 export { searchTrack, getAudioFeatures } from "./metadata/reccobeats";
 export { recommendTracks } from "./recommendations/recommend";
+export { InternetArchiveProvider } from "./providers";
+
