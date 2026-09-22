@@ -9,3 +9,7 @@ export type { FetchLike, MusicBrainzReleaseMatch } from "./metadata/musicbrainz"
 export { getFrontCoverUrl } from "./metadata/coverArt";
 export { createThrottle } from "./metadata/throttle";
 export type { Sleep, ThrottleDeps } from "./metadata/throttle";
+export { parseLrc } from "./lyrics/lrc";
+export type { LyricLine } from "./lyrics/lrc";
+export { getLyrics } from "./lyrics/lrclib";
+export type { LyricsMatch, GetLyricsInput } from "./lyrics/lrclib";
