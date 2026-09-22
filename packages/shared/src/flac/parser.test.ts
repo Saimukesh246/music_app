@@ -1,5 +1,5 @@
 import { parseFlacMetadata } from "./parser";
-import { buildFlacFile, buildStreamInfoData } from "./testFixtures";
+import { buildFlacFile, buildStreamInfoData, buildVorbisCommentData } from "./testFixtures";
 
 const STREAMINFO = 0;
 
@@ -101,5 +101,73 @@ describe("parseFlacMetadata — STREAMINFO", () => {
     };
     const result = parseFlacMetadata(buildFlacFile([streamInfo, padding]));
     expect(result!.streamInfo.sampleRateHz).toBe(48000);
+  });
+});
+
+const VORBIS_COMMENT = 4;
+
+function fileWithComments(comments: string[]) {
+  return buildFlacFile([
+    {
+      type: STREAMINFO,
+      data: buildStreamInfoData({
+        sampleRateHz: 44100,
+        channels: 2,
+        bitsPerSample: 16,
+        totalSamples: 44100,
+      }),
+    },
+    { type: VORBIS_COMMENT, data: buildVorbisCommentData(comments) },
+  ]);
+}
+
+describe("parseFlacMetadata — Vorbis comments", () => {
+  it("reads the standard tag fields", () => {
+    const result = parseFlacMetadata(
+      fileWithComments([
+        "TITLE=Low Tide",
+        "ARTIST=Nocturne Field",
+        "ALBUM=Low Tide Archive",
+        "ALBUMARTIST=Nocturne Field",
+        "TRACKNUMBER=3",
+        "DATE=2024-03-15",
+      ])
+    );
+    expect(result!.tags).toEqual({
+      title: "Low Tide",
+      artist: "Nocturne Field",
+      album: "Low Tide Archive",
+      albumArtist: "Nocturne Field",
+      trackNumber: 3,
+      date: "2024-03-15",
+    });
+  });
+
+  it("treats tag keys case-insensitively", () => {
+    const result = parseFlacMetadata(fileWithComments(["title=lower case key"]));
+    expect(result!.tags.title).toBe("lower case key");
+  });
+
+  it("decodes non-ASCII tag values", () => {
+    const result = parseFlacMetadata(fileWithComments(["ARTIST=Sigur Rós"]));
+    expect(result!.tags.artist).toBe("Sigur Rós");
+  });
+
+  it("handles a track number given as 3/12", () => {
+    const result = parseFlacMetadata(fileWithComments(["TRACKNUMBER=3/12"]));
+    expect(result!.tags.trackNumber).toBe(3);
+  });
+
+  it("ignores unknown and malformed entries", () => {
+    const result = parseFlacMetadata(
+      fileWithComments(["REPLAYGAIN_TRACK_GAIN=-6.5 dB", "no-equals-sign", "=novalue"])
+    );
+    expect(result!.tags).toEqual({});
+  });
+
+  it("still returns stream info when there are no comment blocks", () => {
+    const result = parseFlacMetadata(fileWithComments([]));
+    expect(result!.streamInfo.sampleRateHz).toBe(44100);
+    expect(result!.tags).toEqual({});
   });
 });
