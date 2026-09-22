@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import type { Album, Artist, AudioQualityInfo, Track } from "@aura/types";
+import type { Album, Artist, AudioFeatures, AudioQualityInfo, Track } from "@aura/types";
 
 export interface ScannedTrack {
   id: string;
@@ -40,6 +40,13 @@ export interface LibraryDb {
     trackId: string,
     data: { plainLyrics?: string; syncedLyrics?: string; instrumental: boolean }
   ): Promise<void>;
+  getTracksPendingAudioFeatures(): Promise<
+    { id: string; title: string; artistName: string }[]
+  >;
+  setTrackAudioFeatures(
+    trackId: string,
+    data: { reccobeatsId: string } & AudioFeatures
+  ): Promise<void>;
 }
 
 const SCHEMA = `
@@ -71,6 +78,7 @@ CREATE TABLE IF NOT EXISTS tracks (
   bitrate_kbps   INTEGER,
   duration_sec   REAL NOT NULL
 );
+
 
 CREATE TABLE IF NOT EXISTS favorites (
   track_id TEXT PRIMARY KEY NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
@@ -113,6 +121,12 @@ interface TrackRow {
   channels: number | null;
   bitrate_kbps: number | null;
   duration_sec: number;
+  acousticness: number | null;
+  danceability: number | null;
+  energy: number | null;
+  instrumentalness: number | null;
+  valence: number | null;
+  tempo: number | null;
 }
 
 function rowToTrack(row: TrackRow): Track {
@@ -125,7 +139,7 @@ function rowToTrack(row: TrackRow): Track {
   if (row.channels !== null) quality.channels = row.channels;
   if (row.bitrate_kbps !== null) quality.bitrateKbps = row.bitrate_kbps;
 
-  return {
+  const track: Track = {
     id: row.id,
     title: row.title,
     artistId: row.artist_id,
@@ -134,12 +148,34 @@ function rowToTrack(row: TrackRow): Track {
     albumTitle: row.album_title,
     quality,
   };
+
+  if (
+    row.acousticness !== null &&
+    row.danceability !== null &&
+    row.energy !== null &&
+    row.instrumentalness !== null &&
+    row.valence !== null &&
+    row.tempo !== null
+  ) {
+    track.audioFeatures = {
+      acousticness: row.acousticness,
+      danceability: row.danceability,
+      energy: row.energy,
+      instrumentalness: row.instrumentalness,
+      valence: row.valence,
+      tempo: row.tempo,
+    };
+  }
+
+  return track;
 }
 
 const TRACK_SELECT = `
 SELECT tracks.id, tracks.title, tracks.artist_id, tracks.album_id,
        tracks.format, tracks.bit_depth, tracks.sample_rate_hz,
        tracks.channels, tracks.bitrate_kbps, tracks.duration_sec,
+       tracks.acousticness, tracks.danceability, tracks.energy,
+       tracks.instrumentalness, tracks.valence, tracks.tempo,
        artists.name  AS artist_name,
        albums.title  AS album_title
 FROM tracks
@@ -175,6 +211,13 @@ export async function openLibrary(): Promise<LibraryDb> {
   await ensureColumn(db, "albums", "release_date", "TEXT");
   await ensureColumn(db, "albums", "artwork_url", "TEXT");
   await ensureColumn(db, "artists", "musicbrainz_id", "TEXT");
+  await ensureColumn(db, "tracks", "reccobeats_id", "TEXT");
+  await ensureColumn(db, "tracks", "acousticness", "REAL");
+  await ensureColumn(db, "tracks", "danceability", "REAL");
+  await ensureColumn(db, "tracks", "energy", "REAL");
+  await ensureColumn(db, "tracks", "instrumentalness", "REAL");
+  await ensureColumn(db, "tracks", "valence", "REAL");
+  await ensureColumn(db, "tracks", "tempo", "REAL");
 
   return {
     async upsertScannedTrack(input) {
@@ -371,6 +414,32 @@ export async function openLibrary(): Promise<LibraryDb> {
         data.plainLyrics ?? null,
         data.syncedLyrics ?? null,
         data.instrumental ? 1 : 0
+      );
+    },
+
+    async getTracksPendingAudioFeatures() {
+      const rows = await db.getAllAsync<{ id: string; title: string; artist_name: string }>(
+        `SELECT tracks.id, tracks.title, artists.name AS artist_name
+         FROM tracks JOIN artists ON artists.id = tracks.artist_id
+         WHERE tracks.reccobeats_id IS NULL`
+      );
+      return rows.map((row) => ({ id: row.id, title: row.title, artistName: row.artist_name }));
+    },
+
+    async setTrackAudioFeatures(trackId, data) {
+      await db.runAsync(
+        `UPDATE tracks SET
+           reccobeats_id = ?, acousticness = ?, danceability = ?, energy = ?,
+           instrumentalness = ?, valence = ?, tempo = ?
+         WHERE id = ?`,
+        data.reccobeatsId,
+        data.acousticness,
+        data.danceability,
+        data.energy,
+        data.instrumentalness,
+        data.valence,
+        data.tempo,
+        trackId
       );
     },
   };
