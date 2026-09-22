@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, spacing, radii, typography } from "../theme/tokens";
 import { usePlayerStore } from "../store/playerStore";
 import { useLibraryStore } from "../store/libraryStore";
 import { QualityBadge } from "../components/QualityBadge";
+import { useLyrics } from "../hooks/useLyrics";
+import { LyricsView } from "../components/LyricsView";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
 type Props = NativeStackScreenProps<RootStackParamList, "NowPlaying">;
@@ -35,6 +38,8 @@ export function NowPlayingScreen({ navigation }: Props) {
     currentTrack ? s.isFavorite(currentTrack.id) : false
   );
   const toggleFavorite = useLibraryStore((s) => s.toggleFavorite);
+  const [showLyrics, setShowLyrics] = useState(false);
+  const lyrics = useLyrics(currentTrack);
 
   if (!currentTrack) {
     return (
@@ -52,7 +57,18 @@ export function NowPlayingScreen({ navigation }: Props) {
         <Text style={typography.caption}>Close</Text>
       </Pressable>
 
-      <View style={styles.artwork} />
+      <View style={styles.artworkSlot}>
+        {showLyrics ? (
+          <LyricsView
+            status={lyrics.status}
+            plainLyrics={lyrics.plainLyrics}
+            syncedLines={lyrics.syncedLines}
+            positionSec={positionSec}
+          />
+        ) : (
+          <View style={styles.artwork} />
+        )}
+      </View>
 
       <View style={styles.meta}>
         <Text style={typography.title} numberOfLines={1}>
@@ -64,6 +80,12 @@ export function NowPlayingScreen({ navigation }: Props) {
       </View>
 
       <QualityBadge quality={currentTrack.quality} />
+
+      <Pressable onPress={() => setShowLyrics((v) => !v)} style={styles.lyricsToggle}>
+        <Text style={[typography.label, showLyrics && { color: colors.accent }]}>
+          {showLyrics ? "ARTWORK" : "LYRICS"}
+        </Text>
+      </Pressable>
 
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
@@ -117,12 +139,17 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginBottom: spacing.md,
   },
+  artworkSlot: {
+    marginBottom: spacing.lg,
+  },
   artwork: {
     width: 280,
     height: 280,
     borderRadius: radii.lg,
     backgroundColor: colors.surfaceRaised,
-    marginBottom: spacing.lg,
+  },
+  lyricsToggle: {
+    marginTop: spacing.sm,
   },
   meta: {
     alignItems: "center",

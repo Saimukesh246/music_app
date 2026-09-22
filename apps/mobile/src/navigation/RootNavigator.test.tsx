@@ -8,8 +8,14 @@ jest.mock("expo-sqlite", () => ({
     execAsync: async () => {},
     runAsync: async () => {},
     getAllAsync: async () => [],
+    getFirstAsync: async () => null,
   }),
 }));
+
+// getCachedLyrics resolves to null above, so useLyrics falls through to a
+// real network call unless fetch is mocked here too — this keeps the test
+// offline and deterministic rather than depending on LRCLIB being reachable.
+globalThis.fetch = jest.fn().mockRejectedValue(new Error("no network in tests")) as typeof fetch;
 
 describe("RootNavigator", () => {
   afterEach(async () => {
