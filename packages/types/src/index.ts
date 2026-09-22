@@ -28,6 +28,15 @@ export interface Album {
   trackIds: string[];
 }
 
+export interface AudioFeatures {
+  acousticness: number;
+  danceability: number;
+  energy: number;
+  instrumentalness: number;
+  valence: number;
+  tempo: number; // BPM
+}
+
 export interface Track {
   id: string;
   title: string;
@@ -37,6 +46,7 @@ export interface Track {
   albumTitle: string;
   artworkUrl?: string;
   quality: AudioQualityInfo;
+  audioFeatures?: AudioFeatures;
 }
 
 export interface Playlist {
