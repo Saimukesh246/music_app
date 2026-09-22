@@ -2,7 +2,7 @@
   "name": "@aura/mobile",
   "version": "0.0.1",
   "private": true,
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "index.js",
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo start --dev-client --android",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@aura/shared": "workspace:*",
     "@aura/types": "workspace:*",
+    "@babel/runtime": "^7.24.0",
     "expo": "~51.0.0",
     "expo-dev-client": "~4.0.0",
     "react": "18.2.0",
