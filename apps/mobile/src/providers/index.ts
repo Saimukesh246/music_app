@@ -1,18 +1,12 @@
-import type { MusicProvider } from "@aura/shared";
-import { openLibrary, type LibraryDb } from "../library/database";
-import { createLocalProvider } from "../library/localProvider";
-
-let dbPromise: Promise<LibraryDb> | null = null;
-let providerPromise: Promise<MusicProvider> | null = null;
-
-export function getLibraryDb(): Promise<LibraryDb> {
-  if (!dbPromise) dbPromise = openLibrary();
-  return dbPromise;
-}
-
-export function getProvider(): Promise<MusicProvider> {
-  if (!providerPromise) {
-    providerPromise = getLibraryDb().then(createLocalProvider);
-  }
-  return providerPromise;
-}
+// Re-export everything from the registry so that existing callers of
+// getProvider() / getLibraryDb() continue to work without changes.
+export {
+  getProvider,
+  getLibraryDb,
+  getActiveProvider,
+  setActiveProvider,
+  getActiveProviderId,
+  getRegisteredProviders,
+  REGISTERED_PROVIDERS,
+} from "./registry";
+export type { ProviderId, ProviderEntry } from "./registry";
