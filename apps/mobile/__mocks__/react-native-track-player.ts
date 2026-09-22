@@ -8,6 +8,7 @@ export enum Event {
   RemotePrevious = "remote-previous",
   RemoteSeek = "remote-seek",
   RemoteStop = "remote-stop",
+  RemoteDuck = "remote-duck",
 }
 
 export enum State {
