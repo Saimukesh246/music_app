@@ -1,8 +1,14 @@
 import { ScrollView, View, Text, Switch, Pressable, Alert, StyleSheet } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { colors, spacing, typography } from "../theme/tokens";
 import { scanMusicFolder } from "../library/scanner";
-import { getLibraryDb } from "../providers";
+import {
+  getLibraryDb,
+  getRegisteredProviders,
+  setActiveProvider,
+  getActiveProviderId,
+  type ProviderId,
+} from "../providers";
 import { useLibraryStore } from "../store/libraryStore";
 import { enrichLibrary } from "../metadata/enrichment";
 import { enrichAudioFeatures } from "../metadata/audioFeaturesEnrichment";
@@ -58,8 +64,20 @@ export function SettingsScreen() {
 
   const [scanning, setScanning] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(
+    getActiveProviderId()
+  );
   const hydrateFavorites = useLibraryStore((s) => s.hydrate);
   const bumpLibraryVersion = useLibraryVersionStore((s) => s.bump);
+
+  useEffect(() => {
+    setActiveProviderIdState(getActiveProviderId());
+  }, []);
+
+  async function handleSetProvider(id: ProviderId) {
+    await setActiveProvider(id);
+    setActiveProviderIdState(id);
+  }
 
   async function handleScan() {
     setScanning(true);
@@ -135,8 +153,34 @@ export function SettingsScreen() {
         </Pressable>
       </View>
       <View style={styles.group}>
+        <Text style={[typography.label, styles.groupTitle]}>MUSIC SOURCE</Text>
+        <Text style={[typography.caption, styles.sourceHint]}>
+          Choose where AURA fetches music. Local Library uses your device files.
+          Internet Archive streams free, legally available recordings.
+        </Text>
+        {getRegisteredProviders().map((entry) => (
+          <Pressable
+            key={entry.id}
+            style={styles.sourceRow}
+            onPress={() => void handleSetProvider(entry.id as ProviderId)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: activeProviderId === entry.id }}
+          >
+            <View style={styles.radioOuter}>
+              {activeProviderId === entry.id && <View style={styles.radioInner} />}
+            </View>
+            <View style={styles.sourceText}>
+              <Text style={typography.body}>{entry.name}</Text>
+              <Text style={[typography.caption, { color: colors.textTertiary }]}>
+                {entry.description}
+              </Text>
+            </View>
+          </Pressable>
+        ))}
+      </View>
+      <View style={styles.group}>
         <Text style={[typography.label, styles.groupTitle]}>ABOUT</Text>
-        <Text style={[typography.caption, styles.about]}>AURA 0.0.1 — Phase 2a</Text>
+        <Text style={[typography.caption, styles.about]}>AURA 0.0.1 — Phase 5</Text>
       </View>
     </ScrollView>
   );
@@ -171,5 +215,35 @@ const styles = StyleSheet.create({
   },
   about: {
     paddingHorizontal: spacing.md,
+  },
+  sourceHint: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    color: colors.textTertiary,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  radioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.accent,
+  },
+  sourceText: {
+    flex: 1,
   },
 });

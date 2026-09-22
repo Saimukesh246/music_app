@@ -5,6 +5,7 @@ from app.routers import (
     catalog,
     favorites,
     history,
+    ia,
     lyrics,
     playlists,
     recommendations,
@@ -22,6 +23,7 @@ app.include_router(history.router)
 app.include_router(recommendations.router)
 app.include_router(lyrics.router)
 app.include_router(stream.router)
+app.include_router(ia.router)
 
 
 @app.get("/health")
