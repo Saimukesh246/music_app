@@ -3,10 +3,10 @@ import sqlite3
 
 def seed_track(db_path, title="Low Tide", artist="Nocturne Field", album="Low Tide Archive"):
     conn = sqlite3.connect(db_path)
-    conn.execute("INSERT INTO artists (name) VALUES (?)", (artist,))
+    conn.execute("INSERT OR IGNORE INTO artists (name) VALUES (?)", (artist,))
     artist_id = conn.execute("SELECT id FROM artists WHERE name = ?", (artist,)).fetchone()[0]
     conn.execute(
-        "INSERT INTO albums (title, artist_id) VALUES (?, ?)", (album, artist_id)
+        "INSERT OR IGNORE INTO albums (title, artist_id) VALUES (?, ?)", (album, artist_id)
     )
     album_id = conn.execute("SELECT id FROM albums WHERE title = ?", (album,)).fetchone()[0]
     conn.execute(

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import auth, catalog, favorites, history, playlists, search
+from app.routers import auth, catalog, favorites, history, lyrics, playlists, recommendations, search
 
 app = FastAPI(title="AURA API")
 app.include_router(auth.router)
@@ -9,6 +9,8 @@ app.include_router(search.router)
 app.include_router(playlists.router)
 app.include_router(favorites.router)
 app.include_router(history.router)
+app.include_router(recommendations.router)
+app.include_router(lyrics.router)
 
 
 @app.get("/health")
