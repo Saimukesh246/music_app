@@ -8,6 +8,12 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 
 type Props = NativeStackScreenProps<RootStackParamList, "NowPlaying">;
 
+const REPEAT_LABEL: Record<string, string> = {
+  off: "⟲",
+  all: "⟲ ALL",
+  one: "⟲ ONE",
+};
+
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60)
@@ -23,6 +29,8 @@ export function NowPlayingScreen({ navigation }: Props) {
   const togglePlayPause = usePlayerStore((s) => s.togglePlayPause);
   const playNext = usePlayerStore((s) => s.playNext);
   const playPrevious = usePlayerStore((s) => s.playPrevious);
+  const repeatMode = usePlayerStore((s) => s.repeatMode);
+  const cycleRepeatMode = usePlayerStore((s) => s.cycleRepeatMode);
   const isFavorite = useLibraryStore((s) =>
     currentTrack ? s.isFavorite(currentTrack.id) : false
   );
@@ -76,6 +84,16 @@ export function NowPlayingScreen({ navigation }: Props) {
         </Pressable>
         <Pressable onPress={playNext}>
           <Text style={styles.controlIcon}>⏭</Text>
+        </Pressable>
+        <Pressable onPress={cycleRepeatMode}>
+          <Text
+            style={[
+              styles.controlIcon,
+              repeatMode !== "off" && { color: colors.accent },
+            ]}
+          >
+            {REPEAT_LABEL[repeatMode]}
+          </Text>
         </Pressable>
       </View>
 
