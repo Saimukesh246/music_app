@@ -1,11 +1,12 @@
 import { View, FlatList, Text, StyleSheet } from "react-native";
 import { colors, spacing, typography } from "../theme/tokens";
-import { tracks } from "@aura/shared";
 import { TrackRow } from "../components/TrackRow";
 import { usePlayerStore } from "../store/playerStore";
 import { useLibraryStore } from "../store/libraryStore";
+import { useLibraryData } from "../hooks/useLibraryData";
 
 export function LibraryScreen() {
+  const { tracks } = useLibraryData();
   const playTrack = usePlayerStore((s) => s.playTrack);
   const favoriteTrackIds = useLibraryStore((s) => s.favoriteTrackIds);
   const favoriteTracks = tracks.filter((t) => favoriteTrackIds.has(t.id));

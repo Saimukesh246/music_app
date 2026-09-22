@@ -3,6 +3,14 @@ import { RootNavigator } from "./RootNavigator";
 import { usePlayerStore } from "../store/playerStore";
 import { tracks } from "@aura/shared";
 
+jest.mock("expo-sqlite", () => ({
+  openDatabaseAsync: async () => ({
+    execAsync: async () => {},
+    runAsync: async () => {},
+    getAllAsync: async () => [],
+  }),
+}));
+
 describe("RootNavigator", () => {
   afterEach(() => {
     usePlayerStore.getState().stop();
@@ -17,15 +25,18 @@ describe("RootNavigator", () => {
     });
   });
 
-  it("switches to the Search tab and can find a mock track", async () => {
+  it("switches to the Search tab and queries the library", async () => {
     render(<RootNavigator />);
     fireEvent.press(screen.getByText("Search"));
     fireEvent.changeText(
       screen.getByPlaceholderText("Search songs, albums, artists"),
       "Low Tide"
     );
+    // The real LocalProvider is wired here (backed by a mocked, empty
+    // database), so an unmatched query surfaces the empty state rather
+    // than a fixture track.
     await waitFor(() => {
-      expect(screen.getByText("Low Tide")).toBeTruthy();
+      expect(screen.getByText("No results")).toBeTruthy();
     });
   });
 

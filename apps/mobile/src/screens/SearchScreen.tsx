@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, TextInput, FlatList, Text, StyleSheet } from "react-native";
 import type { SearchResults } from "@aura/types";
 import { colors, spacing, radii, typography } from "../theme/tokens";
-import { provider } from "../providers";
+import { getProvider } from "../providers";
 import { TrackRow } from "../components/TrackRow";
 import { usePlayerStore } from "../store/playerStore";
 
@@ -19,7 +19,9 @@ export function SearchScreen() {
       setResults(EMPTY_RESULTS);
       return;
     }
-    void provider.search(text).then(setResults);
+    void getProvider()
+      .then((provider) => provider.search(text))
+      .then(setResults);
   }
 
   return (

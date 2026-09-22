@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet } from "react-native";
-import type { Album } from "@aura/types";
+import type { Album, Track } from "@aura/types";
 import { colors, spacing, typography } from "../theme/tokens";
 import { ArtworkCard } from "../components/ArtworkCard";
-import { provider } from "../providers";
-import { albums, tracks } from "@aura/shared";
 import { usePlayerStore } from "../store/playerStore";
+import { useLibraryData } from "../hooks/useLibraryData";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -14,8 +12,17 @@ function greeting(): string {
   return "Good evening";
 }
 
-function Section({ title, albums: sectionAlbums }: { title: string; albums: Album[] }) {
+function Section({
+  title,
+  albums: sectionAlbums,
+  tracks,
+}: {
+  title: string;
+  albums: Album[];
+  tracks: Track[];
+}) {
   const playTrack = usePlayerStore((s) => s.playTrack);
+  if (sectionAlbums.length === 0) return null;
 
   return (
     <View style={styles.section}>
@@ -27,11 +34,8 @@ function Section({ title, albums: sectionAlbums }: { title: string; albums: Albu
             title={album.title}
             subtitle={album.artistName}
             onPress={() => {
-              const firstTrack = tracks.find((t) => t.albumId === album.id);
-              if (firstTrack) {
-                const albumTracks = tracks.filter((t) => t.albumId === album.id);
-                playTrack(firstTrack, albumTracks);
-              }
+              const albumTracks = tracks.filter((t) => t.albumId === album.id);
+              if (albumTracks.length > 0) playTrack(albumTracks[0], albumTracks);
             }}
           />
         ))}
@@ -41,21 +45,28 @@ function Section({ title, albums: sectionAlbums }: { title: string; albums: Albu
 }
 
 export function HomeScreen() {
-  const [recentlyPlayed, setRecentlyPlayed] = useState<Album[]>([]);
+  const { tracks, albums, loading } = useLibraryData();
 
-  useEffect(() => {
-    void provider.search("").then(() => setRecentlyPlayed(albums));
-  }, []);
+  const hiRes = albums.filter((album) =>
+    tracks.some(
+      (t) =>
+        t.albumId === album.id &&
+        (t.quality.bitDepth ?? 0) > 16 &&
+        t.quality.format === "FLAC"
+    )
+  );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={[typography.title, styles.greeting]}>{greeting()}</Text>
-      <Section title="Recently Played" albums={recentlyPlayed} />
-      <Section title="Made For You" albums={albums.slice(0, 2)} />
-      <Section title="Your Heavy Rotation" albums={albums.slice(1, 3)} />
-      <Section title="Hi-Res Collection" albums={albums.filter((a) => a.id !== "album-2")} />
-      <Section title="Recently Added" albums={[...albums].reverse()} />
-      <Section title="Recommended For You" albums={albums} />
+      {!loading && albums.length === 0 ? (
+        <Text style={[typography.caption, styles.greeting]}>
+          Your library is empty. Add music from Settings › Scan Music Folder.
+        </Text>
+      ) : null}
+      <Section title="Recently Added" albums={[...albums].reverse()} tracks={tracks} />
+      <Section title="Hi-Res Collection" albums={hiRes} tracks={tracks} />
+      <Section title="Your Heavy Rotation" albums={albums} tracks={tracks} />
     </ScrollView>
   );
 }
