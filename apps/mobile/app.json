@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "AURA",
+    "slug": "aura",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A0C",
+    "splash": {
+      "backgroundColor": "#0A0A0C"
+    },
+    "ios": { "supportsTablet": false },
+    "android": {}
+  }
+}
