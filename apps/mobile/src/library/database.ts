@@ -11,6 +11,13 @@ export interface ScannedTrack {
   quality: AudioQualityInfo;
 }
 
+export interface AlbumPendingEnrichment {
+  id: string;
+  artistId: string;
+  title: string;
+  artistName: string;
+}
+
 export interface LibraryDb {
   upsertScannedTrack(input: ScannedTrack): Promise<void>;
   getAllTracks(): Promise<Track[]>;
@@ -20,6 +27,12 @@ export interface LibraryDb {
   setFavorite(trackId: string, isFavorite: boolean): Promise<void>;
   getFavoriteIds(): Promise<string[]>;
   clearLibrary(): Promise<void>;
+  getAlbumsPendingEnrichment(): Promise<AlbumPendingEnrichment[]>;
+  setAlbumEnrichment(
+    albumId: string,
+    data: { musicbrainzId: string; releaseDate?: string; artworkUrl?: string }
+  ): Promise<void>;
+  setArtistMusicBrainzId(artistId: string, musicbrainzId: string): Promise<void>;
 }
 
 const SCHEMA = `
@@ -124,9 +137,30 @@ function slug(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, "-");
 }
 
+interface MigratableDb {
+  getAllAsync<T>(sql: string): Promise<T[]>;
+  execAsync(sql: string): Promise<unknown>;
+}
+
+export async function ensureColumn(
+  db: MigratableDb,
+  table: string,
+  column: string,
+  ddlType: string
+): Promise<void> {
+  const existing = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+  if (!existing.some((col) => col.name === column)) {
+    await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddlType}`);
+  }
+}
+
 export async function openLibrary(): Promise<LibraryDb> {
   const db = await SQLite.openDatabaseAsync("aura-library.db");
   await db.execAsync(SCHEMA);
+  await ensureColumn(db, "albums", "musicbrainz_id", "TEXT");
+  await ensureColumn(db, "albums", "release_date", "TEXT");
+  await ensureColumn(db, "albums", "artwork_url", "TEXT");
+  await ensureColumn(db, "artists", "musicbrainz_id", "TEXT");
 
   return {
     async upsertScannedTrack(input) {
@@ -188,8 +222,11 @@ export async function openLibrary(): Promise<LibraryDb> {
         title: string;
         artist_id: string;
         artist_name: string;
+        release_date: string | null;
+        artwork_url: string | null;
       }>(
-        `SELECT albums.id, albums.title, albums.artist_id, artists.name AS artist_name
+        `SELECT albums.id, albums.title, albums.artist_id, albums.release_date, albums.artwork_url,
+                artists.name AS artist_name
          FROM albums JOIN artists ON artists.id = albums.artist_id
          ORDER BY albums.title`
       );
@@ -199,13 +236,16 @@ export async function openLibrary(): Promise<LibraryDb> {
           "SELECT id FROM tracks WHERE album_id = ? ORDER BY track_number, title",
           row.id
         );
-        albums.push({
+        const album: Album = {
           id: row.id,
           title: row.title,
           artistId: row.artist_id,
           artistName: row.artist_name,
           trackIds: trackIds.map((t) => t.id),
-        });
+        };
+        if (row.release_date) album.releaseDate = row.release_date;
+        if (row.artwork_url) album.artworkUrl = row.artwork_url;
+        albums.push(album);
       }
       return albums;
     },
@@ -249,6 +289,45 @@ export async function openLibrary(): Promise<LibraryDb> {
     async clearLibrary() {
       await db.execAsync(
         "DELETE FROM playlist_tracks; DELETE FROM favorites; DELETE FROM tracks; DELETE FROM albums; DELETE FROM artists;"
+      );
+    },
+
+    async getAlbumsPendingEnrichment() {
+      const rows = await db.getAllAsync<{
+        id: string;
+        artist_id: string;
+        title: string;
+        artist_name: string;
+      }>(
+        `SELECT albums.id, albums.artist_id, albums.title, artists.name AS artist_name
+         FROM albums JOIN artists ON artists.id = albums.artist_id
+         WHERE albums.musicbrainz_id IS NULL`
+      );
+      return rows.map(
+        (row): AlbumPendingEnrichment => ({
+          id: row.id,
+          artistId: row.artist_id,
+          title: row.title,
+          artistName: row.artist_name,
+        })
+      );
+    },
+
+    async setAlbumEnrichment(albumId, data) {
+      await db.runAsync(
+        "UPDATE albums SET musicbrainz_id = ?, release_date = ?, artwork_url = ? WHERE id = ?",
+        data.musicbrainzId,
+        data.releaseDate ?? null,
+        data.artworkUrl ?? null,
+        albumId
+      );
+    },
+
+    async setArtistMusicBrainzId(artistId, musicbrainzId) {
+      await db.runAsync(
+        "UPDATE artists SET musicbrainz_id = ? WHERE id = ?",
+        musicbrainzId,
+        artistId
       );
     },
   };
