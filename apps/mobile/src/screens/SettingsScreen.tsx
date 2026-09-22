@@ -5,6 +5,7 @@ import { scanMusicFolder } from "../library/scanner";
 import { getLibraryDb } from "../providers";
 import { useLibraryStore } from "../store/libraryStore";
 import { enrichLibrary } from "../metadata/enrichment";
+import { enrichAudioFeatures } from "../metadata/audioFeaturesEnrichment";
 import { useLibraryVersionStore } from "../store/libraryVersionStore";
 
 interface SettingsRow {
@@ -88,13 +89,16 @@ export function SettingsScreen() {
     setEnriching(true);
     try {
       const db = await getLibraryDb();
-      const result = await enrichLibrary(db);
+      const metadataResult = await enrichLibrary(db);
+      const featuresResult = await enrichAudioFeatures(db);
       bumpLibraryVersion();
-      if (result.enriched > 0 || result.skipped > 0) {
+      const enriched = metadataResult.enriched + featuresResult.enriched;
+      const skipped = metadataResult.skipped + featuresResult.skipped;
+      if (enriched > 0 || skipped > 0) {
         Alert.alert(
           "Enrichment complete",
-          `${result.enriched} album${result.enriched === 1 ? "" : "s"} enriched` +
-            (result.skipped > 0 ? `, ${result.skipped} skipped.` : ".")
+          `${enriched} item${enriched === 1 ? "" : "s"} enriched` +
+            (skipped > 0 ? `, ${skipped} skipped.` : ".")
         );
       }
     } catch (error) {

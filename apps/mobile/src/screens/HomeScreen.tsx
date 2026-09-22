@@ -1,8 +1,10 @@
 import { ScrollView, View, Text, StyleSheet } from "react-native";
 import type { Album, Track } from "@aura/types";
+import { recommendTracks } from "@aura/shared";
 import { colors, spacing, typography } from "../theme/tokens";
 import { ArtworkCard } from "../components/ArtworkCard";
 import { usePlayerStore } from "../store/playerStore";
+import { useLibraryStore } from "../store/libraryStore";
 import { useLibraryData } from "../hooks/useLibraryData";
 
 function greeting(): string {
@@ -44,8 +46,24 @@ function Section({
   );
 }
 
+function albumsFromTracks(recommendedTracks: Track[], allAlbums: Album[]): Album[] {
+  const albumById = new Map(allAlbums.map((album) => [album.id, album]));
+  const seen = new Set<string>();
+  const result: Album[] = [];
+  for (const track of recommendedTracks) {
+    if (seen.has(track.albumId)) continue;
+    const album = albumById.get(track.albumId);
+    if (album) {
+      seen.add(track.albumId);
+      result.push(album);
+    }
+  }
+  return result;
+}
+
 export function HomeScreen() {
   const { tracks, albums, loading } = useLibraryData();
+  const favoriteTrackIds = useLibraryStore((s) => s.favoriteTrackIds);
 
   const hiRes = albums.filter((album) =>
     tracks.some(
@@ -55,6 +73,9 @@ export function HomeScreen() {
         t.quality.format === "FLAC"
     )
   );
+
+  const favoriteTracks = tracks.filter((t) => favoriteTrackIds.has(t.id));
+  const recommended = albumsFromTracks(recommendTracks(tracks, favoriteTracks, 10), albums);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -67,6 +88,7 @@ export function HomeScreen() {
       <Section title="Recently Added" albums={[...albums].reverse()} tracks={tracks} />
       <Section title="Hi-Res Collection" albums={hiRes} tracks={tracks} />
       <Section title="Your Heavy Rotation" albums={albums} tracks={tracks} />
+      <Section title="Recommended For You" albums={recommended} tracks={tracks} />
     </ScrollView>
   );
 }
