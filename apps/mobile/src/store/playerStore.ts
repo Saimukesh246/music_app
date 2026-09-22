@@ -59,6 +59,23 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     }
   );
 
+  // True only while a transient interruption (RemoteDuck with
+  // permanent: false) is in effect and nothing else has touched playback
+  // since. Cleared by every explicit user/UI action below.
+  let pausedByInterruption = false;
+
+  TrackPlayer.addEventListener(
+    Event.RemoteDuck,
+    (event: { paused: boolean; permanent: boolean }) => {
+      if (event.paused) {
+        pausedByInterruption = !event.permanent;
+      } else if (pausedByInterruption) {
+        pausedByInterruption = false;
+        void TrackPlayer.play();
+      }
+    }
+  );
+
   return {
     currentTrack: null,
     queue: [],
@@ -67,6 +84,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     repeatMode: "off",
 
     playTrack: async (track, queue) => {
+      pausedByInterruption = false;
       const nextQueue = queue ?? get().queue;
       set({ queue: nextQueue });
 
@@ -86,15 +104,18 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     togglePlayPause: async () => {
+      pausedByInterruption = false;
       if (get().isPlaying) await TrackPlayer.pause();
       else await TrackPlayer.play();
     },
 
     playNext: async () => {
+      pausedByInterruption = false;
       await TrackPlayer.skipToNext();
     },
 
     playPrevious: async () => {
+      pausedByInterruption = false;
       await TrackPlayer.skipToPrevious();
     },
 
@@ -111,6 +132,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     stop: async () => {
+      pausedByInterruption = false;
       await TrackPlayer.reset();
       set({ currentTrack: null, queue: [], isPlaying: false, positionSec: 0 });
     },

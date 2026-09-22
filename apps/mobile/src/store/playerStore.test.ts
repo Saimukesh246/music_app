@@ -123,3 +123,49 @@ describe("usePlayerStore — stop", () => {
     });
   });
 });
+
+describe("usePlayerStore — interruption handling", () => {
+  it("resumes after a transient interruption ends", () => {
+    fireEvent(Event.RemoteDuck, { paused: true, permanent: false });
+    fireEvent(Event.RemoteDuck, { paused: false, permanent: false });
+    expect(TrackPlayer.play).toHaveBeenCalled();
+  });
+
+  it("does not resume after a permanent interruption ends", () => {
+    (TrackPlayer.play as jest.Mock).mockClear();
+
+    fireEvent(Event.RemoteDuck, { paused: true, permanent: true });
+    fireEvent(Event.RemoteDuck, { paused: false, permanent: false });
+
+    expect(TrackPlayer.play).not.toHaveBeenCalled();
+  });
+
+  it("does not resume if togglePlayPause ran during the interruption", () => {
+    (TrackPlayer.play as jest.Mock).mockClear();
+
+    fireEvent(Event.RemoteDuck, { paused: true, permanent: false });
+    usePlayerStore.getState().togglePlayPause();
+    (TrackPlayer.play as jest.Mock).mockClear(); // clear the call toggle itself made
+    fireEvent(Event.RemoteDuck, { paused: false, permanent: false });
+
+    expect(TrackPlayer.play).not.toHaveBeenCalled();
+  });
+
+  it("does not resume if stop() ran during the interruption", async () => {
+    fireEvent(Event.RemoteDuck, { paused: true, permanent: false });
+    await usePlayerStore.getState().stop();
+    (TrackPlayer.play as jest.Mock).mockClear();
+    fireEvent(Event.RemoteDuck, { paused: false, permanent: false });
+
+    expect(TrackPlayer.play).not.toHaveBeenCalled();
+  });
+
+  it("does not resume if playNext ran during the interruption", () => {
+    fireEvent(Event.RemoteDuck, { paused: true, permanent: false });
+    usePlayerStore.getState().playNext();
+    (TrackPlayer.play as jest.Mock).mockClear();
+    fireEvent(Event.RemoteDuck, { paused: false, permanent: false });
+
+    expect(TrackPlayer.play).not.toHaveBeenCalled();
+  });
+});
