@@ -1,0 +1,9 @@
+{
+  "name": "aura",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "mobile": "pnpm --filter @aura/mobile start",
+    "test": "pnpm -r test"
+  }
+}
