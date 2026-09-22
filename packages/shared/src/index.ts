@@ -13,3 +13,5 @@ export { parseLrc } from "./lyrics/lrc";
 export type { LyricLine } from "./lyrics/lrc";
 export { getLyrics } from "./lyrics/lrclib";
 export type { LyricsMatch, GetLyricsInput } from "./lyrics/lrclib";
+export { searchTrack, getAudioFeatures } from "./metadata/reccobeats";
+export { recommendTracks } from "./recommendations/recommend";
