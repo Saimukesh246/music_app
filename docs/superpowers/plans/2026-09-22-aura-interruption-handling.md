@@ -1,6 +1,6 @@
 # AURA Interruption Handling Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make AURA pause outright (never duck) on any audio interruption and
 resume automatically only after a transient interruption ends with nothing
@@ -54,7 +54,7 @@ apps/mobile/
 **Interfaces:**
 - No signature changes; `setupPlayer()` still returns `Promise<void>`.
 
-- [ ] **Step 1: Add `alwaysPauseOnInterruption` to the `updateOptions` call**
+- [x] **Step 1: Add `alwaysPauseOnInterruption` to the `updateOptions` call**
 
 In `apps/mobile/src/audio/setup.ts`, add `alwaysPauseOnInterruption: true` to
 the existing `android` object passed to `TrackPlayer.updateOptions`:
@@ -71,12 +71,12 @@ the existing `android` object passed to `TrackPlayer.updateOptions`:
 (The rest of the `updateOptions` call — `capabilities`, `compactCapabilities`,
 `progressUpdateEventInterval` — is unchanged.)
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/audio/setup.ts
@@ -94,7 +94,7 @@ git commit -m "feat(mobile): pause outright rather than duck on audio interrupti
 - Produces: `Event.RemoteDuck` on the mock's `Event` enum, consumed by
   Task 3's tests.
 
-- [ ] **Step 1: Add the event to the mock's `Event` enum**
+- [x] **Step 1: Add the event to the mock's `Event` enum**
 
 In `apps/mobile/__mocks__/react-native-track-player.ts`, add `RemoteDuck` next
 to the other events:
@@ -114,7 +114,7 @@ export enum Event {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add apps/mobile/__mocks__/react-native-track-player.ts
@@ -136,7 +136,7 @@ git commit -m "test(mobile): add RemoteDuck to the RNTP jest mock"
   the side effect of clearing the private interruption flag; their existing
   signatures and behavior are otherwise unchanged.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append this to `apps/mobile/src/store/playerStore.test.ts`:
 
@@ -188,13 +188,13 @@ describe("usePlayerStore — interruption handling", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/mobile test playerStore`
 Expected: FAIL — the current store has no `RemoteDuck` listener, so `play()`
 is never called by any of these tests.
 
-- [ ] **Step 3: Add the interruption flag and handler to `playerStore.ts`**
+- [x] **Step 3: Add the interruption flag and handler to `playerStore.ts`**
 
 Add this inside the `create<PlayerState>((set, get) => { ... })` factory,
 right after the existing `TrackPlayer.addEventListener` calls (after the
@@ -259,17 +259,17 @@ Then clear the flag at the start of each of these existing actions (add
     },
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/mobile test playerStore`
 Expected: PASS (17 tests — the 12 from Phase 2b plus 5 new).
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 6: Run the full mobile suite**
+- [x] **Step 6: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — every suite green, no regressions from the interleaved test
@@ -277,7 +277,7 @@ ordering (the store is a singleton across the file, so later `describe`
 blocks can observe state earlier ones left behind; the tests above each
 explicitly set up the sequence they need rather than assuming a clean slate).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/mobile/src/store/playerStore.ts apps/mobile/src/store/playerStore.test.ts
@@ -290,14 +290,14 @@ git commit -m "feat(mobile): auto-resume only after a transient interruption wit
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Confirm what IS verified**
+- [x] **Step 1: Confirm what IS verified**
 
 Run: `pnpm -r test`
 Record the passing counts. The interruption flag's state machine — transient
 resume, permanent no-resume, and every user-action override — is verified
 against a mocked player.
 
-- [ ] **Step 2: Give the user this checklist to confirm on device**
+- [x] **Step 2: Give the user this checklist to confirm on device**
 
   - Playing music, then receiving a notification with sound: playback pauses
     cleanly (no ducking/volume drop heard) and resumes on its own once the
@@ -311,7 +311,7 @@ against a mocked player.
     paused once the notification ends (does not auto-resume over the user's
     choice)
 
-- [ ] **Step 3: Report honestly**
+- [x] **Step 3: Report honestly**
 
 State plainly which items are verified by tests and which await the user's
 device confirmation.

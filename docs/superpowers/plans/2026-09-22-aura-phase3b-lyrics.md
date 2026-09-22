@@ -1,6 +1,6 @@
 # AURA Phase 3b Implementation Plan — LRCLIB Lyrics
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add synchronized and plain lyrics to Now Playing, sourced from
 LRCLIB, cached in SQLite, toggled in place of the artwork square — no new
@@ -73,7 +73,7 @@ apps/mobile/src/
 - Produces: `LyricLine` interface and `parseLrc(text: string): LyricLine[]`.
   Consumed by `useLyrics` (Task 5).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/lyrics/lrc.test.ts
@@ -126,12 +126,12 @@ describe("parseLrc", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test lrc`
 Expected: FAIL — cannot find module `./lrc`.
 
-- [ ] **Step 3: Write `packages/shared/src/lyrics/lrc.ts`**
+- [x] **Step 3: Write `packages/shared/src/lyrics/lrc.ts`**
 
 ```typescript
 export interface LyricLine {
@@ -163,12 +163,12 @@ export function parseLrc(text: string): LyricLine[] {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test lrc`
 Expected: PASS (8 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/lyrics/lrc.ts packages/shared/src/lyrics/lrc.test.ts
@@ -190,7 +190,7 @@ git commit -m "feat(shared): add a pure LRC lyrics format parser"
   `getLyrics(fetchFn: FetchLike, input: { trackName: string; artistName: string; albumName?: string; durationSec: number }): Promise<LyricsMatch | null>`.
   Consumed by `useLyrics` (Task 5).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/lyrics/lrclib.test.ts
@@ -295,12 +295,12 @@ describe("getLyrics", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test lrclib`
 Expected: FAIL — cannot find module `./lrclib`.
 
-- [ ] **Step 3: Write `packages/shared/src/lyrics/lrclib.ts`**
+- [x] **Step 3: Write `packages/shared/src/lyrics/lrclib.ts`**
 
 ```typescript
 import type { FetchLike } from "../metadata/musicbrainz";
@@ -363,12 +363,12 @@ export async function getLyrics(
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test lrclib`
 Expected: PASS (8 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/lyrics/lrclib.ts packages/shared/src/lyrics/lrclib.test.ts
@@ -386,7 +386,7 @@ git commit -m "feat(shared): add LRCLIB lyrics lookup client"
 - Produces: `parseLrc`, `getLyrics` and their types, re-exported from
   `@aura/shared`. Consumed by `useLyrics` (Task 5).
 
-- [ ] **Step 1: Add the exports**
+- [x] **Step 1: Add the exports**
 
 Append to `packages/shared/src/index.ts`:
 
@@ -397,12 +397,12 @@ export { getLyrics } from "./lyrics/lrclib";
 export type { LyricsMatch, GetLyricsInput } from "./lyrics/lrclib";
 ```
 
-- [ ] **Step 2: Run the whole shared suite**
+- [x] **Step 2: Run the whole shared suite**
 
 Run: `pnpm --filter @aura/shared test`
 Expected: PASS (53 tests — 37 from Phase 3a plus 16 new).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/shared/src/index.ts
@@ -421,7 +421,7 @@ git commit -m "feat(shared): export the lyrics APIs"
   and `cacheLyrics(trackId: string, data: { plainLyrics?: string; syncedLyrics?: string; instrumental: boolean }): Promise<void>`
   on `LibraryDb`. Consumed by `useLyrics` (Task 5).
 
-- [ ] **Step 1: Add the `lyrics` table to `SCHEMA`**
+- [x] **Step 1: Add the `lyrics` table to `SCHEMA`**
 
 In `apps/mobile/src/library/database.ts`, add this table to the `SCHEMA`
 string, right after the `playlist_tracks` table definition and before the
@@ -440,7 +440,7 @@ This is a new table, so it needs no `ensureColumn` migration — only columns
 added to an already-existing table need that (as Phase 3a's `albums` columns
 did).
 
-- [ ] **Step 2: Extend the `LibraryDb` interface**
+- [x] **Step 2: Extend the `LibraryDb` interface**
 
 Add these two methods to the `LibraryDb` interface, after
 `setArtistMusicBrainzId`:
@@ -455,7 +455,7 @@ Add these two methods to the `LibraryDb` interface, after
   ): Promise<void>;
 ```
 
-- [ ] **Step 3: Implement the methods**
+- [x] **Step 3: Implement the methods**
 
 Add these two methods to the object returned from `openLibrary()`, after
 `setArtistMusicBrainzId`:
@@ -491,18 +491,18 @@ Add these two methods to the object returned from `openLibrary()`, after
     },
 ```
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 5: Run the full mobile suite**
+- [x] **Step 5: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — no regressions (the existing `migration.test.ts` only
 exercises `ensureColumn`, unaffected by this new table).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/mobile/src/library/database.ts
@@ -529,7 +529,7 @@ the database) are already independently tested, and this file is glue
 between them plus React state, not logic worth re-mocking both dependencies
 to exercise.
 
-- [ ] **Step 1: Write `apps/mobile/src/hooks/useLyrics.ts`**
+- [x] **Step 1: Write `apps/mobile/src/hooks/useLyrics.ts`**
 
 ```typescript
 import { useEffect, useState } from "react";
@@ -607,12 +607,12 @@ export function useLyrics(track: Track | null): LyricsState {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/hooks/useLyrics.ts
@@ -633,7 +633,7 @@ git commit -m "feat(mobile): add useLyrics, a cache-then-network lyrics hook"
   `{ status: LyricsStatus; plainLyrics?: string; syncedLines?: LyricLine[]; positionSec: number }`,
   consumed by `NowPlayingScreen` (Task 7).
 
-- [ ] **Step 1: Write `apps/mobile/src/components/LyricsView.tsx`**
+- [x] **Step 1: Write `apps/mobile/src/components/LyricsView.tsx`**
 
 ```tsx
 import { useEffect, useMemo, useRef } from "react";
@@ -755,12 +755,12 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/components/LyricsView.tsx
@@ -779,7 +779,7 @@ git commit -m "feat(mobile): add LyricsView with loading/instrumental/unavailabl
 - Produces: no new exports; adds a "Lyrics" toggle button that swaps the
   artwork square for `LyricsView` in place.
 
-- [ ] **Step 1: Add the imports**
+- [x] **Step 1: Add the imports**
 
 ```typescript
 import { useState } from "react";
@@ -787,7 +787,7 @@ import { useLyrics } from "../hooks/useLyrics";
 import { LyricsView } from "../components/LyricsView";
 ```
 
-- [ ] **Step 2: Call the hook and add toggle state**
+- [x] **Step 2: Call the hook and add toggle state**
 
 Add these lines inside `NowPlayingScreen`, alongside the existing
 `usePlayerStore`/`useLibraryStore` calls:
@@ -801,7 +801,7 @@ Add these lines inside `NowPlayingScreen`, alongside the existing
 return, so this call happens before that check — same as the other hooks
 already called unconditionally at the top of the component.)
 
-- [ ] **Step 3: Swap the artwork square for `LyricsView` when toggled**
+- [x] **Step 3: Swap the artwork square for `LyricsView` when toggled**
 
 Replace:
 
@@ -824,7 +824,7 @@ with:
       )}
 ```
 
-- [ ] **Step 4: Add the toggle button**
+- [x] **Step 4: Add the toggle button**
 
 Add it right after the `<QualityBadge quality={currentTrack.quality} />`
 line:
@@ -837,7 +837,7 @@ line:
       </Pressable>
 ```
 
-- [ ] **Step 5: Add the toggle button's style**
+- [x] **Step 5: Add the toggle button's style**
 
 Add to the `StyleSheet.create` call, alongside the other style entries:
 
@@ -847,17 +847,17 @@ Add to the `StyleSheet.create` call, alongside the other style entries:
   },
 ```
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 7: Run the full mobile suite**
+- [x] **Step 7: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — no regressions.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/mobile/src/screens/NowPlayingScreen.tsx
@@ -870,13 +870,13 @@ git commit -m "feat(mobile): add a lyrics toggle to Now Playing"
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Confirm what IS verified**
+- [x] **Step 1: Confirm what IS verified**
 
 Run: `pnpm -r test`
 Record the passing counts. The LRC parser and the LRCLIB client are fully
 verified against hand-built fixtures and mocked HTTP responses.
 
-- [ ] **Step 2: Give the user this checklist to confirm on device**
+- [x] **Step 2: Give the user this checklist to confirm on device**
 
   - Open Now Playing for a track, tap "Lyrics": a loading state briefly
     appears, then either synced lyrics, plain lyrics, an instrumental
@@ -888,7 +888,7 @@ verified against hand-built fixtures and mocked HTTP responses.
     (from cache), not another loading state
   - Playback continues uninterrupted the entire time lyrics are loading
 
-- [ ] **Step 3: Report honestly**
+- [x] **Step 3: Report honestly**
 
 State plainly which items are verified by tests and which await the user's
 device confirmation.

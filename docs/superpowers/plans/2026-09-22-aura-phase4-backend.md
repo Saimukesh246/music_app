@@ -1,6 +1,6 @@
 # AURA Phase 4 Implementation Plan — Standalone FastAPI Backend
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** A real, tested, locally-runnable FastAPI backend in `apps/api` —
 self-contained auth, artists/albums/tracks/search/playlists/favorites/
@@ -101,7 +101,7 @@ apps/api/
   `client` pytest fixture in `conftest.py` (a `TestClient` pointed at a
   fresh temp-file database), consumed by every later task's tests.
 
-- [ ] **Step 1: Create `apps/api/requirements.txt`**
+- [x] **Step 1: Create `apps/api/requirements.txt`**
 
 ```
 fastapi==0.115.0
@@ -112,14 +112,14 @@ httpx==0.27.2
 pytest==8.3.3
 ```
 
-- [ ] **Step 2: Create `apps/api/pytest.ini`**
+- [x] **Step 2: Create `apps/api/pytest.ini`**
 
 ```ini
 [pytest]
 testpaths = tests
 ```
 
-- [ ] **Step 3: Install dependencies**
+- [x] **Step 3: Install dependencies**
 
 Run:
 ```bash
@@ -128,9 +128,9 @@ pip install -r requirements.txt
 ```
 Expected: installs without error.
 
-- [ ] **Step 4: Create `apps/api/app/__init__.py`** (empty file, makes `app` a package)
+- [x] **Step 4: Create `apps/api/app/__init__.py`** (empty file, makes `app` a package)
 
-- [ ] **Step 5: Write `apps/api/app/database.py`**
+- [x] **Step 5: Write `apps/api/app/database.py`**
 
 ```python
 import os
@@ -221,7 +221,7 @@ def get_db():
         conn.close()
 ```
 
-- [ ] **Step 6: Write `apps/api/app/main.py`**
+- [x] **Step 6: Write `apps/api/app/main.py`**
 
 ```python
 from fastapi import FastAPI
@@ -234,9 +234,9 @@ def health():
     return {"status": "ok"}
 ```
 
-- [ ] **Step 7: Create `apps/api/tests/__init__.py`** (empty file)
+- [x] **Step 7: Create `apps/api/tests/__init__.py`** (empty file)
 
-- [ ] **Step 8: Write `apps/api/tests/conftest.py`**
+- [x] **Step 8: Write `apps/api/tests/conftest.py`**
 
 ```python
 import pytest
@@ -260,7 +260,7 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 ```
 
-- [ ] **Step 9: Write the failing test**
+- [x] **Step 9: Write the failing test**
 
 ```python
 # apps/api/tests/test_health.py
@@ -270,7 +270,7 @@ def test_health_returns_ok(client):
     assert response.json() == {"status": "ok"}
 ```
 
-- [ ] **Step 10: Run to verify it passes**
+- [x] **Step 10: Run to verify it passes**
 
 Run (from `apps/api`):
 ```bash
@@ -280,7 +280,7 @@ Expected: PASS (1 test). (This test doesn't exercise auth yet, so it should
 pass immediately — it exists to prove the scaffold, fixture, and app wiring
 all work before later tasks build on them.)
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add apps/api/requirements.txt apps/api/pytest.ini apps/api/app apps/api/tests
@@ -303,9 +303,9 @@ git commit -m "chore(api): scaffold FastAPI project with sqlite schema and test 
   `decode_access_token(token: str) -> int | None`. Consumed by the `auth`
   router (Task 3) and the shared auth dependency used by every other router.
 
-- [ ] **Step 1: Create `apps/api/app/core/__init__.py`** (empty file)
+- [x] **Step 1: Create `apps/api/app/core/__init__.py`** (empty file)
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```python
 # apps/api/tests/test_security.py
@@ -343,12 +343,12 @@ def test_decode_access_token_returns_none_for_a_garbage_token():
     assert decode_access_token("not-a-real-token") is None
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `python -m pytest tests/test_security.py -v`
 Expected: FAIL — cannot import `app.core.security`.
 
-- [ ] **Step 4: Write `apps/api/app/core/security.py`**
+- [x] **Step 4: Write `apps/api/app/core/security.py`**
 
 ```python
 import hashlib
@@ -392,12 +392,12 @@ def decode_access_token(token: str) -> int | None:
         return None
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `python -m pytest tests/test_security.py -v`
 Expected: PASS (5 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/app/core apps/api/tests/test_security.py
@@ -423,9 +423,9 @@ git commit -m "feat(api): add password hashing and JWT helpers"
   missing/invalid token, otherwise returning the authenticated user's ID),
   exported from `auth.py`. Consumed by every other router (Tasks 4-9).
 
-- [ ] **Step 1: Create `apps/api/app/models/__init__.py`** (empty file)
+- [x] **Step 1: Create `apps/api/app/models/__init__.py`** (empty file)
 
-- [ ] **Step 2: Write `apps/api/app/models/schemas.py`**
+- [x] **Step 2: Write `apps/api/app/models/schemas.py`**
 
 ```python
 from typing import Optional
@@ -512,9 +512,9 @@ class LyricsOut(BaseModel):
     available: bool
 ```
 
-- [ ] **Step 3: Create `apps/api/app/routers/__init__.py`** (empty file)
+- [x] **Step 3: Create `apps/api/app/routers/__init__.py`** (empty file)
 
-- [ ] **Step 4: Write the failing test**
+- [x] **Step 4: Write the failing test**
 
 ```python
 # apps/api/tests/test_auth.py
@@ -571,12 +571,12 @@ then, not a 401/200 mismatch. If running this file in isolation before Task
 4 exists, skip those three by running only the first four with
 `-k "not protected_endpoint"`.
 
-- [ ] **Step 5: Run the first four tests to verify they fail**
+- [x] **Step 5: Run the first four tests to verify they fail**
 
 Run: `python -m pytest tests/test_auth.py -v -k "not protected_endpoint"`
 Expected: FAIL — no `/auth/register` or `/auth/login` route exists yet.
 
-- [ ] **Step 6: Write `apps/api/app/routers/auth.py`**
+- [x] **Step 6: Write `apps/api/app/routers/auth.py`**
 
 ```python
 import sqlite3
@@ -632,7 +632,7 @@ def require_user_id(authorization: str = Header(default="")) -> int:
     return user_id
 ```
 
-- [ ] **Step 7: Register the router in `apps/api/app/main.py`**
+- [x] **Step 7: Register the router in `apps/api/app/main.py`**
 
 ```python
 from fastapi import FastAPI
@@ -648,13 +648,13 @@ def health():
     return {"status": "ok"}
 ```
 
-- [ ] **Step 8: Run to verify the first four tests pass**
+- [x] **Step 8: Run to verify the first four tests pass**
 
 Run: `python -m pytest tests/test_auth.py -v -k "not protected_endpoint"`
 Expected: PASS (4 tests). The three `protected_endpoint` tests still fail
 with a 404 until Task 4 adds `/artists` — that's expected at this point.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add apps/api/app/models apps/api/app/routers/__init__.py apps/api/app/routers/auth.py apps/api/app/main.py apps/api/tests/test_auth.py
@@ -677,7 +677,7 @@ git commit -m "feat(api): add self-contained email/password auth with JWT"
   `GET /albums/{id}`, `GET /tracks`, `GET /tracks/{id}`. Consumed by
   `search.py` (Task 5) as the pattern to follow for reading the same tables.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # apps/api/tests/test_catalog.py
@@ -747,13 +747,13 @@ def test_get_track_404_when_missing(client, auth_headers):
     assert response.status_code == 404
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `python -m pytest tests/test_catalog.py -v`
 Expected: FAIL — 404s for routes that don't exist yet (not the intentional
 404-for-missing-ID tests, but "no such route at all").
 
-- [ ] **Step 3: Write `apps/api/app/routers/catalog.py`**
+- [x] **Step 3: Write `apps/api/app/routers/catalog.py`**
 
 ```python
 import sqlite3
@@ -825,7 +825,7 @@ def get_track(track_id: int, db: sqlite3.Connection = Depends(get_db)):
     return TrackOut(**dict(row))
 ```
 
-- [ ] **Step 4: Register the router in `apps/api/app/main.py`**
+- [x] **Step 4: Register the router in `apps/api/app/main.py`**
 
 ```python
 from fastapi import FastAPI
@@ -842,7 +842,7 @@ def health():
     return {"status": "ok"}
 ```
 
-- [ ] **Step 5: Run to verify `test_catalog.py` passes, then re-run `test_auth.py` in full**
+- [x] **Step 5: Run to verify `test_catalog.py` passes, then re-run `test_auth.py` in full**
 
 Run: `python -m pytest tests/test_catalog.py -v`
 Expected: PASS (7 tests).
@@ -851,7 +851,7 @@ Run: `python -m pytest tests/test_auth.py -v`
 Expected: PASS (7 tests) — the three `protected_endpoint` tests deferred
 from Task 3 now pass too, since `/artists` exists.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/app/routers/catalog.py apps/api/app/main.py apps/api/tests/test_catalog.py
@@ -873,7 +873,7 @@ git commit -m "feat(api): add artists/albums/tracks catalog endpoints"
   directly rather than duplicated).
 - Produces: `GET /search?q=`. No other task depends on this one.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # apps/api/tests/test_search.py
@@ -912,12 +912,12 @@ def test_search_requires_auth(client):
     assert response.status_code == 401
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `python -m pytest tests/test_search.py -v`
 Expected: FAIL — no `/search` route exists yet.
 
-- [ ] **Step 3: Write `apps/api/app/routers/search.py`**
+- [x] **Step 3: Write `apps/api/app/routers/search.py`**
 
 ```python
 import sqlite3
@@ -953,7 +953,7 @@ def search(q: str, db: sqlite3.Connection = Depends(get_db)):
     )
 ```
 
-- [ ] **Step 4: Register the router in `apps/api/app/main.py`**
+- [x] **Step 4: Register the router in `apps/api/app/main.py`**
 
 ```python
 from app.routers import auth, catalog, search
@@ -961,12 +961,12 @@ from app.routers import auth, catalog, search
 app.include_router(search.router)
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `python -m pytest tests/test_search.py -v`
 Expected: PASS (5 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/app/routers/search.py apps/api/app/main.py apps/api/tests/test_search.py
@@ -990,7 +990,7 @@ git commit -m "feat(api): add search across artists, albums, and tracks"
   `DELETE /playlists/{id}/tracks/{track_id}`. No other task depends on this
   one.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # apps/api/tests/test_playlists.py
@@ -1042,12 +1042,12 @@ def test_playlists_require_auth(client):
     assert client.get("/playlists").status_code == 401
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `python -m pytest tests/test_playlists.py -v`
 Expected: FAIL — no `/playlists` routes exist yet.
 
-- [ ] **Step 3: Write `apps/api/app/routers/playlists.py`**
+- [x] **Step 3: Write `apps/api/app/routers/playlists.py`**
 
 ```python
 import sqlite3
@@ -1149,7 +1149,7 @@ def remove_track(
     )
 ```
 
-- [ ] **Step 4: Register the router in `apps/api/app/main.py`**
+- [x] **Step 4: Register the router in `apps/api/app/main.py`**
 
 ```python
 from app.routers import auth, catalog, playlists, search
@@ -1157,12 +1157,12 @@ from app.routers import auth, catalog, playlists, search
 app.include_router(playlists.router)
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `python -m pytest tests/test_playlists.py -v`
 Expected: PASS (5 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/app/routers/playlists.py apps/api/app/main.py apps/api/tests/test_playlists.py
@@ -1187,7 +1187,7 @@ git commit -m "feat(api): add playlist CRUD and track membership endpoints"
   by `recommendations.py` (Task 8), which reads `favorites` for its
   most-favorited fallback.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # apps/api/tests/test_favorites_history.py
@@ -1227,12 +1227,12 @@ def test_history_requires_auth(client):
     assert client.get("/history").status_code == 401
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `python -m pytest tests/test_favorites_history.py -v`
 Expected: FAIL — no `/favorites` or `/history` routes exist yet.
 
-- [ ] **Step 3: Write `apps/api/app/routers/favorites.py`**
+- [x] **Step 3: Write `apps/api/app/routers/favorites.py`**
 
 ```python
 import sqlite3
@@ -1278,7 +1278,7 @@ def remove_favorite(
     )
 ```
 
-- [ ] **Step 4: Write `apps/api/app/routers/history.py`**
+- [x] **Step 4: Write `apps/api/app/routers/history.py`**
 
 ```python
 import sqlite3
@@ -1318,7 +1318,7 @@ def record_play(
     return {"status": "recorded"}
 ```
 
-- [ ] **Step 5: Register both routers in `apps/api/app/main.py`**
+- [x] **Step 5: Register both routers in `apps/api/app/main.py`**
 
 ```python
 from app.routers import auth, catalog, favorites, history, playlists, search
@@ -1327,12 +1327,12 @@ app.include_router(favorites.router)
 app.include_router(history.router)
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `python -m pytest tests/test_favorites_history.py -v`
 Expected: PASS (4 tests).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/api/app/routers/favorites.py apps/api/app/routers/history.py apps/api/app/main.py apps/api/tests/test_favorites_history.py
@@ -1355,7 +1355,7 @@ git commit -m "feat(api): add favorites and play-history endpoints"
 - Produces: `GET /recommendations?seed_track_id=`, `GET /lyrics/{track_id}`.
   No other task depends on these.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # apps/api/tests/test_recommendations_lyrics.py
@@ -1424,12 +1424,12 @@ def test_lyrics_require_auth(client):
     assert client.get("/lyrics/1").status_code == 401
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `python -m pytest tests/test_recommendations_lyrics.py -v`
 Expected: FAIL — no `/recommendations` or `/lyrics` routes exist yet.
 
-- [ ] **Step 3: Write `apps/api/app/routers/recommendations.py`**
+- [x] **Step 3: Write `apps/api/app/routers/recommendations.py`**
 
 ```python
 import sqlite3
@@ -1480,7 +1480,7 @@ def recommendations(
     return [TrackOut(**dict(row)) for row in rows]
 ```
 
-- [ ] **Step 4: Write `apps/api/app/routers/lyrics.py`**
+- [x] **Step 4: Write `apps/api/app/routers/lyrics.py`**
 
 ```python
 import sqlite3
@@ -1513,7 +1513,7 @@ def get_lyrics(
     )
 ```
 
-- [ ] **Step 5: Register both routers in `apps/api/app/main.py`**
+- [x] **Step 5: Register both routers in `apps/api/app/main.py`**
 
 ```python
 from app.routers import auth, catalog, favorites, history, lyrics, playlists, recommendations, search
@@ -1522,12 +1522,12 @@ app.include_router(recommendations.router)
 app.include_router(lyrics.router)
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `python -m pytest tests/test_recommendations_lyrics.py -v`
 Expected: PASS (6 tests).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/api/app/routers/recommendations.py apps/api/app/routers/lyrics.py apps/api/app/main.py apps/api/tests/test_recommendations_lyrics.py
@@ -1547,7 +1547,7 @@ git commit -m "feat(api): add same-artist/most-favorited recommendations and cac
 - Consumes: `require_user_id` (Task 3); `get_db` (Task 1).
 - Produces: `GET /stream/{track_id}`. No other task depends on this one.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # apps/api/tests/test_stream.py
@@ -1605,12 +1605,12 @@ def test_stream_requires_auth(client):
     assert client.get("/stream/1").status_code == 401
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `python -m pytest tests/test_stream.py -v`
 Expected: FAIL — no `/stream` route exists yet.
 
-- [ ] **Step 3: Write `apps/api/app/routers/stream.py`**
+- [x] **Step 3: Write `apps/api/app/routers/stream.py`**
 
 ```python
 import os
@@ -1682,7 +1682,7 @@ def stream(
     )
 ```
 
-- [ ] **Step 4: Register the router in `apps/api/app/main.py`**
+- [x] **Step 4: Register the router in `apps/api/app/main.py`**
 
 ```python
 from app.routers import auth, catalog, favorites, history, lyrics, playlists, recommendations, search, stream
@@ -1690,12 +1690,12 @@ from app.routers import auth, catalog, favorites, history, lyrics, playlists, re
 app.include_router(stream.router)
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `python -m pytest tests/test_stream.py -v`
 Expected: PASS (4 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/app/routers/stream.py apps/api/app/main.py apps/api/tests/test_stream.py
@@ -1711,12 +1711,12 @@ git commit -m "feat(api): add range-request audio streaming"
 
 **Interfaces:** none (verification and documentation only).
 
-- [ ] **Step 1: Run the entire backend test suite**
+- [x] **Step 1: Run the entire backend test suite**
 
 Run (from `apps/api`): `python -m pytest -v`
 Expected: PASS — every test from Tasks 1-9 (approximately 42 tests).
 
-- [ ] **Step 2: Start the server for real and smoke-test it live**
+- [x] **Step 2: Start the server for real and smoke-test it live**
 
 Run: `python -m uvicorn app.main:app --port 8000 &` (background), then:
 
@@ -1734,7 +1734,7 @@ real HTTP, not just that the test harness can reach it.
 
 Stop the server afterward (`kill` the background process).
 
-- [ ] **Step 3: Write `apps/api/README.md`**
+- [x] **Step 3: Write `apps/api/README.md`**
 
 ```markdown
 # AURA API
@@ -1776,7 +1776,7 @@ SQLite, path controlled by the `AURA_DB_PATH` environment variable
 automatically on first connection.
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/api/README.md

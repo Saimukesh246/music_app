@@ -1,6 +1,6 @@
 # AURA Phase 3c Implementation Plan — Audio Features + Local Recommendations
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Use ReccoBeats to enrich local tracks with real audio features
 (acousticness, danceability, energy, instrumentalness, valence, tempo), then
@@ -82,7 +82,7 @@ apps/mobile/src/
 - Produces: `AudioFeatures` interface; `Track.audioFeatures?: AudioFeatures`.
   Consumed by every other task in this plan.
 
-- [ ] **Step 1: Add the type and field**
+- [x] **Step 1: Add the type and field**
 
 In `packages/types/src/index.ts`, add this interface above `Track`:
 
@@ -113,7 +113,7 @@ export interface Track {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/types/src/index.ts
@@ -135,7 +135,7 @@ git commit -m "feat(types): add AudioFeatures and Track.audioFeatures"
   (using the `AudioFeatures` shape from `@aura/types`, re-imported here).
   Consumed by `audioFeaturesEnrichment.ts` (Task 6).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/metadata/reccobeats.test.ts
@@ -238,12 +238,12 @@ describe("getAudioFeatures", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test reccobeats`
 Expected: FAIL — cannot find module `./reccobeats`.
 
-- [ ] **Step 3: Write `packages/shared/src/metadata/reccobeats.ts`**
+- [x] **Step 3: Write `packages/shared/src/metadata/reccobeats.ts`**
 
 ```typescript
 import type { AudioFeatures } from "@aura/types";
@@ -338,12 +338,12 @@ export async function getAudioFeatures(
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test reccobeats`
 Expected: PASS (10 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/metadata/reccobeats.ts packages/shared/src/metadata/reccobeats.test.ts
@@ -363,7 +363,7 @@ git commit -m "feat(shared): add ReccoBeats search and audio-features client"
 - Produces: `recommendTracks(candidates: Track[], seeds: Track[], count: number): Track[]`.
   Consumed by `HomeScreen` (Task 7).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/recommendations/recommend.test.ts
@@ -454,12 +454,12 @@ describe("recommendTracks", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test recommend`
 Expected: FAIL — cannot find module `./recommend`.
 
-- [ ] **Step 3: Write `packages/shared/src/recommendations/recommend.ts`**
+- [x] **Step 3: Write `packages/shared/src/recommendations/recommend.ts`**
 
 ```typescript
 import type { AudioFeatures, Track } from "@aura/types";
@@ -502,12 +502,12 @@ export function recommendTracks(candidates: Track[], seeds: Track[], count: numb
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test recommend`
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/recommendations/recommend.ts packages/shared/src/recommendations/recommend.test.ts
@@ -526,7 +526,7 @@ git commit -m "feat(shared): add a local nearest-neighbor recommendation algorit
   from `@aura/shared`. Consumed by `audioFeaturesEnrichment.ts` (Task 6) and
   `HomeScreen` (Task 7).
 
-- [ ] **Step 1: Add the exports**
+- [x] **Step 1: Add the exports**
 
 Append to `packages/shared/src/index.ts`:
 
@@ -535,12 +535,12 @@ export { searchTrack, getAudioFeatures } from "./metadata/reccobeats";
 export { recommendTracks } from "./recommendations/recommend";
 ```
 
-- [ ] **Step 2: Run the whole shared suite**
+- [x] **Step 2: Run the whole shared suite**
 
 Run: `pnpm --filter @aura/shared test`
 Expected: PASS (69 tests — 53 from Phase 3b plus 16 new).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/shared/src/index.ts
@@ -562,7 +562,7 @@ git commit -m "feat(shared): export the ReccoBeats and recommendation APIs"
   `audioFeaturesEnrichment.ts` (Task 6) and `HomeScreen` (Task 7, via
   `useLibraryData`, unchanged).
 
-- [ ] **Step 1: Import `AudioFeatures`**
+- [x] **Step 1: Import `AudioFeatures`**
 
 Change the top-of-file import in `apps/mobile/src/library/database.ts`:
 
@@ -570,7 +570,7 @@ Change the top-of-file import in `apps/mobile/src/library/database.ts`:
 import type { Album, Artist, AudioFeatures, AudioQualityInfo, Track } from "@aura/types";
 ```
 
-- [ ] **Step 2: Extend `LibraryDb`**
+- [x] **Step 2: Extend `LibraryDb`**
 
 Add these two methods to the `LibraryDb` interface, after `cacheLyrics`:
 
@@ -584,7 +584,7 @@ Add these two methods to the `LibraryDb` interface, after `cacheLyrics`:
   ): Promise<void>;
 ```
 
-- [ ] **Step 3: Add the migration columns**
+- [x] **Step 3: Add the migration columns**
 
 In `openLibrary()`, add these six calls after the existing `ensureColumn`
 calls:
@@ -599,7 +599,7 @@ calls:
   await ensureColumn(db, "tracks", "tempo", "REAL");
 ```
 
-- [ ] **Step 4: Extend `TrackRow` and `rowToTrack`**
+- [x] **Step 4: Extend `TrackRow` and `rowToTrack`**
 
 Add these fields to the `TrackRow` interface:
 
@@ -659,7 +659,7 @@ function rowToTrack(row: TrackRow): Track {
 }
 ```
 
-- [ ] **Step 5: Add the new columns to `TRACK_SELECT`**
+- [x] **Step 5: Add the new columns to `TRACK_SELECT`**
 
 ```typescript
 const TRACK_SELECT = `
@@ -676,7 +676,7 @@ JOIN albums  ON albums.id  = tracks.album_id
 `;
 ```
 
-- [ ] **Step 6: Implement the two new methods**
+- [x] **Step 6: Implement the two new methods**
 
 Add after `cacheLyrics` in the object returned from `openLibrary()`:
 
@@ -708,17 +708,17 @@ Add after `cacheLyrics` in the object returned from `openLibrary()`:
     },
 ```
 
-- [ ] **Step 7: Type-check**
+- [x] **Step 7: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 8: Run the full mobile suite**
+- [x] **Step 8: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — no regressions.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add apps/mobile/src/library/database.ts
@@ -743,7 +743,7 @@ orchestrator's control flow is exercised by the device-verification
 checklist (Task 8) rather than a unit test, since its two collaborators (the
 ReccoBeats client and the database) are already independently tested.
 
-- [ ] **Step 1: Write `apps/mobile/src/metadata/audioFeaturesEnrichment.ts`**
+- [x] **Step 1: Write `apps/mobile/src/metadata/audioFeaturesEnrichment.ts`**
 
 ```typescript
 import { searchTrack, getAudioFeatures, createThrottle } from "@aura/shared";
@@ -789,12 +789,12 @@ export async function enrichAudioFeatures(db: LibraryDb): Promise<AudioFeaturesE
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/metadata/audioFeaturesEnrichment.ts
@@ -815,7 +815,7 @@ git commit -m "feat(mobile): add the audio-features enrichment orchestrator"
 - Produces: no new exports; `handleEnrich` also runs audio-feature
   enrichment; `HomeScreen` gains a "Recommended For You" section.
 
-- [ ] **Step 1: Extend `handleEnrich` in `SettingsScreen.tsx`**
+- [x] **Step 1: Extend `handleEnrich` in `SettingsScreen.tsx`**
 
 Add the import:
 
@@ -850,7 +850,7 @@ Replace the body of `handleEnrich` with:
   }
 ```
 
-- [ ] **Step 2: Add the "Recommended For You" section to `HomeScreen.tsx`**
+- [x] **Step 2: Add the "Recommended For You" section to `HomeScreen.tsx`**
 
 Add the imports:
 
@@ -898,17 +898,17 @@ section:
       <Section title="Recommended For You" albums={recommended} tracks={tracks} />
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 4: Run the full mobile suite**
+- [x] **Step 4: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — no regressions.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/mobile/src/screens/SettingsScreen.tsx apps/mobile/src/screens/HomeScreen.tsx
@@ -921,14 +921,14 @@ git commit -m "feat(mobile): wire audio-feature enrichment and add Recommended F
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Confirm what IS verified**
+- [x] **Step 1: Confirm what IS verified**
 
 Run: `pnpm -r test`
 Record the passing counts. The ReccoBeats client and the local
 recommendation algorithm are fully verified against mocked HTTP responses
 and hand-built feature vectors.
 
-- [ ] **Step 2: Give the user this checklist to confirm on device**
+- [x] **Step 2: Give the user this checklist to confirm on device**
 
   - Settings → Enrich Metadata: still completes without errors now that it
     also runs audio-feature enrichment (may take longer — two throttled
@@ -943,7 +943,7 @@ and hand-built feature vectors.
   - The app stays responsive while both enrichment passes run in the
     background
 
-- [ ] **Step 3: Report honestly**
+- [x] **Step 3: Report honestly**
 
 State plainly which items are verified by tests and which await the user's
 device confirmation. Do not describe real ReccoBeats matches or

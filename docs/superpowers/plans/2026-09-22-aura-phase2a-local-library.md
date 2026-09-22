@@ -1,6 +1,6 @@
 # AURA Phase 2a Implementation Plan — Local Library Data Layer
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace fixture data with a real local music library — imported from
 a device folder, with audio quality parsed from actual FLAC bytes and persisted
@@ -78,7 +78,7 @@ apps/mobile/src/
 - Produces: a working `pnpm --filter @aura/shared test` running plain-node Jest
   over TypeScript, used by every later task in this package.
 
-- [ ] **Step 1: Create `packages/shared/babel.config.js`**
+- [x] **Step 1: Create `packages/shared/babel.config.js`**
 
 ```javascript
 module.exports = {
@@ -89,7 +89,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 2: Create `packages/shared/jest.config.js`**
+- [x] **Step 2: Create `packages/shared/jest.config.js`**
 
 ```javascript
 module.exports = {
@@ -98,7 +98,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 3: Add the test script and devDependencies to `packages/shared/package.json`**
+- [x] **Step 3: Add the test script and devDependencies to `packages/shared/package.json`**
 
 Add a `"scripts"` block and a `"devDependencies"` block so the file reads:
 
@@ -125,17 +125,17 @@ Add a `"scripts"` block and a `"devDependencies"` block so the file reads:
 }
 ```
 
-- [ ] **Step 4: Install**
+- [x] **Step 4: Install**
 
 Run: `pnpm install`
 Expected: completes without error.
 
-- [ ] **Step 5: Verify the runner starts**
+- [x] **Step 5: Verify the runner starts**
 
 Run: `pnpm --filter @aura/shared test --passWithNoTests`
 Expected: PASS — "No tests found, exiting with code 0".
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/shared
@@ -158,7 +158,7 @@ git commit -m "chore(shared): add pure-node jest setup"
 We hand-roll UTF-8 decoding rather than using `TextDecoder`, which is not
 reliably present across React Native's Hermes runtime.
 
-- [ ] **Step 1: Write `packages/shared/src/flac/utf8.ts`**
+- [x] **Step 1: Write `packages/shared/src/flac/utf8.ts`**
 
 ```typescript
 export function decodeUtf8(bytes: Uint8Array): string {
@@ -210,7 +210,7 @@ export function encodeUtf8(text: string): Uint8Array {
 }
 ```
 
-- [ ] **Step 2: Write `packages/shared/src/flac/testFixtures.ts`**
+- [x] **Step 2: Write `packages/shared/src/flac/testFixtures.ts`**
 
 ```typescript
 import { encodeUtf8 } from "./utf8";
@@ -302,7 +302,7 @@ export function buildFlacFile(
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/shared/src/flac
@@ -324,7 +324,7 @@ git commit -m "feat(shared): add utf8 codec and FLAC test fixture builders"
   `quality.ts` (Task 5) and the scanner (Task 7). In this task
   `FlacMetadata.tags` is always `{}`; Task 4 fills it in.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/flac/parser.test.ts
@@ -435,12 +435,12 @@ describe("parseFlacMetadata — STREAMINFO", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test parser`
 Expected: FAIL — cannot find module `./parser`.
 
-- [ ] **Step 3: Write `packages/shared/src/flac/parser.ts`**
+- [x] **Step 3: Write `packages/shared/src/flac/parser.ts`**
 
 ```typescript
 const MAGIC = [0x66, 0x4c, 0x61, 0x43];
@@ -528,12 +528,12 @@ export function parseFlacMetadata(bytes: Uint8Array): FlacMetadata | null {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test parser`
 Expected: PASS (7 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/flac/parser.ts packages/shared/src/flac/parser.test.ts
@@ -553,7 +553,7 @@ git commit -m "feat(shared): parse FLAC STREAMINFO from raw bytes"
 - Produces: populated `FlacMetadata.tags` — `title`, `artist`, `album`,
   `albumArtist`, `trackNumber`, `date`. Consumed by the scanner (Task 7).
 
-- [ ] **Step 1: Add the failing tests to `parser.test.ts`**
+- [x] **Step 1: Add the failing tests to `parser.test.ts`**
 
 Append this block, and extend the existing import to
 `import { buildFlacFile, buildStreamInfoData, buildVorbisCommentData } from "./testFixtures";`
@@ -628,12 +628,12 @@ describe("parseFlacMetadata — Vorbis comments", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify the new tests fail**
+- [x] **Step 2: Run to verify the new tests fail**
 
 Run: `pnpm --filter @aura/shared test parser`
 Expected: FAIL — tags come back `{}` where values are expected.
 
-- [ ] **Step 3: Add Vorbis parsing to `parser.ts`**
+- [x] **Step 3: Add Vorbis parsing to `parser.ts`**
 
 Add the import at the top of the file:
 
@@ -736,12 +736,12 @@ and return them:
   return { streamInfo, tags };
 ```
 
-- [ ] **Step 4: Run to verify all parser tests pass**
+- [x] **Step 4: Run to verify all parser tests pass**
 
 Run: `pnpm --filter @aura/shared test parser`
 Expected: PASS (13 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/flac/parser.ts packages/shared/src/flac/parser.test.ts
@@ -767,7 +767,7 @@ git commit -m "feat(shared): parse FLAC Vorbis comment tags"
 This function is where the Global Constraints' integrity rule is enforced, so
 its tests are the most important in the slice.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/flac/quality.test.ts
@@ -849,12 +849,12 @@ describe("describeAudioFile", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test quality`
 Expected: FAIL — cannot find module `./quality`.
 
-- [ ] **Step 3: Write `packages/shared/src/flac/quality.ts`**
+- [x] **Step 3: Write `packages/shared/src/flac/quality.ts`**
 
 Note `getQualityLabel` is moved here from the mobile app so the rule lives in
 one place next to the parser; Task 6 updates the app to import it from here.
@@ -922,12 +922,12 @@ export function describeAudioFile(
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test quality`
 Expected: PASS (9 tests).
 
-- [ ] **Step 5: Export the new API from `packages/shared/src/index.ts`**
+- [x] **Step 5: Export the new API from `packages/shared/src/index.ts`**
 
 ```typescript
 export type { MusicProvider } from "./provider";
@@ -938,12 +938,12 @@ export type { FlacMetadata, FlacStreamInfo, FlacTags } from "./flac/parser";
 export { describeAudioFile, getQualityLabel } from "./flac/quality";
 ```
 
-- [ ] **Step 6: Run the whole shared suite**
+- [x] **Step 6: Run the whole shared suite**
 
 Run: `pnpm --filter @aura/shared test`
 Expected: PASS (22 tests).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/shared/src
@@ -968,7 +968,7 @@ git commit -m "feat(shared): enforce the quality integrity rule in describeAudio
 There must be exactly one implementation of the labeling rule. The app's local
 copy is deleted in favour of the shared one.
 
-- [ ] **Step 1: Replace the local rule in `QualityBadge.tsx`**
+- [x] **Step 1: Replace the local rule in `QualityBadge.tsx`**
 
 Delete the `LOSSLESS_FORMATS` constant and the local `getQualityLabel`
 function, and replace the imports at the top of the file with:
@@ -985,7 +985,7 @@ export { getQualityLabel };
 The rest of the file (`formatDetail`, `labelColor`, `QualityBadge`, `styles`)
 is unchanged.
 
-- [ ] **Step 2: Render unknown durations honestly in `TrackRow.tsx`**
+- [x] **Step 2: Render unknown durations honestly in `TrackRow.tsx`**
 
 Replace the `formatDuration` function with:
 
@@ -1000,7 +1000,7 @@ function formatDuration(sec: number): string {
 }
 ```
 
-- [ ] **Step 3: Add an unknown-duration case to `QualityBadge.test.tsx`**
+- [x] **Step 3: Add an unknown-duration case to `QualityBadge.test.tsx`**
 
 Append inside the existing `describe("QualityBadge", ...)` block:
 
@@ -1011,12 +1011,12 @@ Append inside the existing `describe("QualityBadge", ...)` block:
   });
 ```
 
-- [ ] **Step 4: Run the mobile suite**
+- [x] **Step 4: Run the mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — 10 tests (the 9 from Phase 1 plus the new one).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/mobile/src/components
@@ -1041,12 +1041,12 @@ git commit -m "refactor(mobile): use the shared quality rule, show unknown durat
   `getFavoriteIds(): Promise<string[]>`, `clearLibrary(): Promise<void>`.
   Consumed by the scanner (Task 8) and `LocalProvider` (Task 9).
 
-- [ ] **Step 1: Add the dependency**
+- [x] **Step 1: Add the dependency**
 
 Run: `pnpm --filter @aura/mobile add expo-sqlite@~14.0.6`
 Expected: installs without error.
 
-- [ ] **Step 2: Write `apps/mobile/src/library/database.ts`**
+- [x] **Step 2: Write `apps/mobile/src/library/database.ts`**
 
 ```typescript
 import * as SQLite from "expo-sqlite";
@@ -1306,12 +1306,12 @@ export async function openLibrary(): Promise<LibraryDb> {
 }
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/mobile/src/library/database.ts apps/mobile/package.json pnpm-lock.yaml
@@ -1332,7 +1332,7 @@ git commit -m "feat(mobile): add SQLite library schema and queries"
   `ScanResult` is `{ imported: number; unreadable: number; cancelled: boolean }`.
   Consumed by `SettingsScreen` (Task 10).
 
-- [ ] **Step 1: Write `apps/mobile/src/library/scanner.ts`**
+- [x] **Step 1: Write `apps/mobile/src/library/scanner.ts`**
 
 ```typescript
 import * as FileSystem from "expo-file-system";
@@ -1437,12 +1437,12 @@ export async function scanMusicFolder(db: LibraryDb): Promise<ScanResult> {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/library/scanner.ts
@@ -1463,7 +1463,7 @@ git commit -m "feat(mobile): scan an SAF folder, reading only file headers"
   `getProvider(): Promise<MusicProvider>` from `providers/index.ts`, consumed by
   every screen.
 
-- [ ] **Step 1: Write `apps/mobile/src/library/localProvider.ts`**
+- [x] **Step 1: Write `apps/mobile/src/library/localProvider.ts`**
 
 ```typescript
 import type { MusicProvider } from "@aura/shared";
@@ -1543,7 +1543,7 @@ export function createLocalProvider(db: LibraryDb): MusicProvider {
 }
 ```
 
-- [ ] **Step 2: Replace `apps/mobile/src/providers/index.ts`**
+- [x] **Step 2: Replace `apps/mobile/src/providers/index.ts`**
 
 ```typescript
 import type { MusicProvider } from "@aura/shared";
@@ -1566,13 +1566,13 @@ export function getProvider(): Promise<MusicProvider> {
 }
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: errors only in screens still importing the removed `provider`
 constant — Task 10 fixes those.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/mobile/src/library/localProvider.ts apps/mobile/src/providers/index.ts
@@ -1597,7 +1597,7 @@ git commit -m "feat(mobile): serve the library through a SQLite-backed LocalProv
   `{ tracks: Track[]; albums: Album[]; loading: boolean; reload: () => void }`,
   used by Home and Library.
 
-- [ ] **Step 1: Create `apps/mobile/src/hooks/useLibraryData.ts`**
+- [x] **Step 1: Create `apps/mobile/src/hooks/useLibraryData.ts`**
 
 ```typescript
 import { useCallback, useEffect, useState } from "react";
@@ -1629,7 +1629,7 @@ export function useLibraryData() {
 }
 ```
 
-- [ ] **Step 2: Rewrite `HomeScreen.tsx` to use it**
+- [x] **Step 2: Rewrite `HomeScreen.tsx` to use it**
 
 Replace the imports of `provider`, `albums` and `tracks` from `@aura/shared`
 with `import { useLibraryData } from "../hooks/useLibraryData";`, drop the
@@ -1697,7 +1697,7 @@ export function HomeScreen() {
 }
 ```
 
-- [ ] **Step 3: Update `SearchScreen.tsx`**
+- [x] **Step 3: Update `SearchScreen.tsx`**
 
 Replace `import { provider } from "../providers";` with
 `import { getProvider } from "../providers";` and replace the body of
@@ -1716,7 +1716,7 @@ Replace `import { provider } from "../providers";` with
   }
 ```
 
-- [ ] **Step 4: Update `LibraryScreen.tsx`**
+- [x] **Step 4: Update `LibraryScreen.tsx`**
 
 Replace `import { tracks } from "@aura/shared";` with
 `import { useLibraryData } from "../hooks/useLibraryData";`, and at the top of
@@ -1728,7 +1728,7 @@ the component replace the fixture reference with:
 
 The rest of the component is unchanged.
 
-- [ ] **Step 5: Persist favorites in `store/libraryStore.ts`**
+- [x] **Step 5: Persist favorites in `store/libraryStore.ts`**
 
 ```typescript
 import { create } from "zustand";
@@ -1763,7 +1763,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 }));
 ```
 
-- [ ] **Step 6: Add the scan entry point to `SettingsScreen.tsx`**
+- [x] **Step 6: Add the scan entry point to `SettingsScreen.tsx`**
 
 Add these imports:
 
@@ -1816,7 +1816,7 @@ And render a Library group above the About group:
       </View>
 ```
 
-- [ ] **Step 7: Type-check and run all tests**
+- [x] **Step 7: Type-check and run all tests**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
@@ -1839,7 +1839,7 @@ jest.mock("expo-sqlite", () => ({
 }));
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/mobile/src
@@ -1855,13 +1855,13 @@ git commit -m "feat(mobile): serve every screen from the real local library"
 This slice's device-dependent behaviour cannot be verified without the user's
 Android hardware. Do not claim any of it works until they confirm.
 
-- [ ] **Step 1: Confirm what IS verified**
+- [x] **Step 1: Confirm what IS verified**
 
 Run: `pnpm -r test`
 Record the passing counts. The parser, the integrity rule, and the labeling
 logic are verified by these tests.
 
-- [ ] **Step 2: Build a dev client for the user**
+- [x] **Step 2: Build a dev client for the user**
 
 The SAF folder picker and `expo-sqlite` are native modules, so Expo Go will not
 run this build. Tell the user to run:
@@ -1871,7 +1871,7 @@ cd apps/mobile
 npx expo run:android
 ```
 
-- [ ] **Step 3: Give the user this checklist to confirm on device**
+- [x] **Step 3: Give the user this checklist to confirm on device**
 
   - Settings › Scan Music Folder opens the Android folder picker
   - Granting a folder containing FLAC files reports a non-zero import count
@@ -1882,7 +1882,7 @@ npx expo run:android
   - An MP3 in the same folder shows **Lossy**
   - Favoriting a track, force-quitting, and reopening keeps the favorite
 
-- [ ] **Step 4: Report honestly**
+- [x] **Step 4: Report honestly**
 
 State plainly which items are verified by tests and which await the user's
 device confirmation. Do not describe unverified device behaviour as working.

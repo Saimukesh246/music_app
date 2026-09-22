@@ -1,6 +1,6 @@
 # AURA Phase 2b Implementation Plan — Real Audio Engine
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace `playerStore`'s simulated `setInterval` playback with real audio
 via `react-native-track-player`: actual sound, a native queue, lock-screen and
@@ -81,12 +81,12 @@ apps/mobile/
   event handlers by Task 3; this task only needs it to exist so `index.js`
   type-checks.
 
-- [ ] **Step 1: Add the dependency**
+- [x] **Step 1: Add the dependency**
 
 Run: `cd apps/mobile && pnpm add react-native-track-player@^4.1.1`
 Expected: installs without error.
 
-- [ ] **Step 2: Add the config plugin to `apps/mobile/app.json`**
+- [x] **Step 2: Add the config plugin to `apps/mobile/app.json`**
 
 Add a `"plugins"` array to the `"expo"` object:
 
@@ -110,7 +110,7 @@ Add a `"plugins"` array to the `"expo"` object:
 }
 ```
 
-- [ ] **Step 3: Write a stub `apps/mobile/src/audio/playbackService.ts`**
+- [x] **Step 3: Write a stub `apps/mobile/src/audio/playbackService.ts`**
 
 ```typescript
 export async function PlaybackService(): Promise<void> {
@@ -118,7 +118,7 @@ export async function PlaybackService(): Promise<void> {
 }
 ```
 
-- [ ] **Step 4: Register the service in `apps/mobile/index.js`**
+- [x] **Step 4: Register the service in `apps/mobile/index.js`**
 
 ```javascript
 import { registerRootComponent } from "expo";
@@ -131,12 +131,12 @@ TrackPlayer.registerPlaybackService(() => PlaybackService);
 registerRootComponent(App);
 ```
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/mobile/package.json apps/mobile/app.json apps/mobile/index.js apps/mobile/src/audio/playbackService.ts pnpm-lock.yaml
@@ -159,7 +159,7 @@ git commit -m "chore(mobile): add react-native-track-player and register the pla
   call needed in test files. Consumed by every test in Tasks 3-5 and by the
   existing `RootNavigator.test.tsx`.
 
-- [ ] **Step 1: Write `apps/mobile/__mocks__/react-native-track-player.ts`**
+- [x] **Step 1: Write `apps/mobile/__mocks__/react-native-track-player.ts`**
 
 ```typescript
 export enum Event {
@@ -220,7 +220,7 @@ const TrackPlayer = {
 export default TrackPlayer;
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add apps/mobile/__mocks__/react-native-track-player.ts
@@ -242,7 +242,7 @@ git commit -m "test(mobile): add manual jest mock for react-native-track-player"
   RemoteNext/RemotePrevious/RemoteSeek`. This is the function `index.js`
   (Task 1) already registers.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // apps/mobile/src/audio/playbackService.test.ts
@@ -296,13 +296,13 @@ describe("PlaybackService", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/mobile test playbackService`
 Expected: FAIL — no listener registered for each event (the stub does
 nothing).
 
-- [ ] **Step 3: Write the real `apps/mobile/src/audio/playbackService.ts`**
+- [x] **Step 3: Write the real `apps/mobile/src/audio/playbackService.ts`**
 
 ```typescript
 import TrackPlayer, { Event } from "react-native-track-player";
@@ -321,12 +321,12 @@ export async function PlaybackService(): Promise<void> {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/mobile test playbackService`
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/mobile/src/audio/playbackService.ts apps/mobile/src/audio/playbackService.test.ts
@@ -346,7 +346,7 @@ git commit -m "feat(mobile): wire lock-screen/notification remote-control events
 - Produces: `RNTPTrack` interface and `toRNTPTrack(track: Track, uri: string):
   RNTPTrack`, consumed by `playerStore` (Task 5).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // apps/mobile/src/audio/trackMapper.test.ts
@@ -375,12 +375,12 @@ describe("toRNTPTrack", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/mobile test trackMapper`
 Expected: FAIL — cannot find module `./trackMapper`.
 
-- [ ] **Step 3: Write `apps/mobile/src/audio/trackMapper.ts`**
+- [x] **Step 3: Write `apps/mobile/src/audio/trackMapper.ts`**
 
 ```typescript
 import type { Track } from "@aura/types";
@@ -406,12 +406,12 @@ export function toRNTPTrack(track: Track, uri: string): RNTPTrack {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/mobile test trackMapper`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/mobile/src/audio/trackMapper.ts apps/mobile/src/audio/trackMapper.test.ts
@@ -436,7 +436,7 @@ This is thin glue around native setup with no branching logic worth a unit
 test beyond the type-check; Task 7's manual verification checklist covers
 whether it actually initializes the player on device.
 
-- [ ] **Step 1: Write `apps/mobile/src/audio/setup.ts`**
+- [x] **Step 1: Write `apps/mobile/src/audio/setup.ts`**
 
 ```typescript
 import TrackPlayer, {
@@ -474,12 +474,12 @@ export function setupPlayer(): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/audio/setup.ts
@@ -506,7 +506,7 @@ This test mocks `../providers` directly (not the SQLite chain underneath it),
 because this is a unit test of the store/RNTP integration, not of the
 database.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // apps/mobile/src/store/playerStore.test.ts
@@ -637,13 +637,13 @@ describe("usePlayerStore — stop", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/mobile test playerStore`
 Expected: FAIL — the current `setInterval`-based store has no `repeatMode`,
 never calls `TrackPlayer.*`, and never touches `../providers`.
 
-- [ ] **Step 3: Rewrite `apps/mobile/src/store/playerStore.ts`**
+- [x] **Step 3: Rewrite `apps/mobile/src/store/playerStore.ts`**
 
 ```typescript
 import { create } from "zustand";
@@ -775,12 +775,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 });
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/mobile test playerStore`
 Expected: PASS (13 tests).
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean). Every action above is declared `async` while the
@@ -789,7 +789,7 @@ for `void`-typed function properties accepts a `Promise<void>`-returning
 implementation, so existing call sites (`onPress={() => playTrack(...)}`) keep
 compiling unchanged.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/mobile/src/store/playerStore.ts apps/mobile/src/store/playerStore.test.ts
@@ -808,7 +808,7 @@ git commit -m "feat(mobile): drive playerStore from real react-native-track-play
 - Produces: no new exports; `setupPlayer()` is called once when the app
   mounts, alongside the existing favorites hydration from Phase 2a.
 
-- [ ] **Step 1: Add the setup call to `apps/mobile/App.tsx`**
+- [x] **Step 1: Add the setup call to `apps/mobile/App.tsx`**
 
 ```tsx
 import { useEffect } from "react";
@@ -836,12 +836,12 @@ export default function App() {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/App.tsx
@@ -859,7 +859,7 @@ git commit -m "feat(mobile): initialize the audio player on app launch"
 - Consumes: `repeatMode`, `cycleRepeatMode` from `usePlayerStore` (Task 6).
 - Produces: no new exports; adds a repeat control to the existing controls row.
 
-- [ ] **Step 1: Read the current controls block and add the repeat button**
+- [x] **Step 1: Read the current controls block and add the repeat button**
 
 Add `repeatMode` and `cycleRepeatMode` to the store selectors near the top of
 `NowPlayingScreen`, alongside the existing `usePlayerStore` calls:
@@ -903,17 +903,17 @@ prev/play-pause/next), add a repeat button as the last child:
 block with itself plus the new repeat `Pressable` immediately after it — the
 existing prev/play-pause buttons are unchanged.)
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Run the full mobile suite**
+- [x] **Step 3: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — all existing tests plus the new ones from Tasks 3, 4, 6.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/mobile/src/screens/NowPlayingScreen.tsx
@@ -930,14 +930,14 @@ Real playback, lock-screen controls, and background survival cannot be
 verified without the user's Android hardware. Do not claim any of it works
 until they confirm.
 
-- [ ] **Step 1: Confirm what IS verified**
+- [x] **Step 1: Confirm what IS verified**
 
 Run: `pnpm -r test`
 Record the passing counts. The store's event mirroring, the queue-loading
 logic, the repeat-mode cycling, and the remote-control wiring are verified by
 these tests against a mocked player.
 
-- [ ] **Step 2: Rebuild the dev client**
+- [x] **Step 2: Rebuild the dev client**
 
 RNTP's config plugin changes native code, so a JS-only reload is not enough.
 Tell the user to run:
@@ -948,7 +948,7 @@ npx expo prebuild --clean
 npx expo run:android
 ```
 
-- [ ] **Step 3: Give the user this checklist to confirm on device**
+- [x] **Step 3: Give the user this checklist to confirm on device**
 
   - Tapping a track in Search or Library produces actual audio output
   - The mini-player and Now Playing progress bar advance in real time and
@@ -960,7 +960,7 @@ npx expo run:android
   - Repeat cycles Off → All → One on Now Playing, and "One" actually repeats
     the current track instead of advancing
 
-- [ ] **Step 4: Report honestly**
+- [x] **Step 4: Report honestly**
 
 State plainly which items are verified by tests and which await the user's
 device confirmation. Do not describe unverified device behaviour as working.

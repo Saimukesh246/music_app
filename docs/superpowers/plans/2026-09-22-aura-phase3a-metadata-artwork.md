@@ -1,6 +1,6 @@
 # AURA Phase 3a Implementation Plan — Metadata + Artwork Enrichment
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Enrich the locally scanned library with real MusicBrainz metadata
 and real Cover Art Archive artwork, replacing the placeholder letter tiles
@@ -77,7 +77,7 @@ apps/mobile/src/
 - Produces: `createThrottle(minIntervalMs: number, deps?: { sleep?: (ms: number) => Promise<void>; now?: () => number }): <T>(fn: () => Promise<T>) => Promise<T>`.
   Consumed by `enrichment.ts` (Task 6).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/metadata/throttle.test.ts
@@ -150,12 +150,12 @@ describe("createThrottle", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test throttle`
 Expected: FAIL — cannot find module `./throttle`.
 
-- [ ] **Step 3: Write `packages/shared/src/metadata/throttle.ts`**
+- [x] **Step 3: Write `packages/shared/src/metadata/throttle.ts`**
 
 ```typescript
 export type Sleep = (ms: number) => Promise<void>;
@@ -195,12 +195,12 @@ export function createThrottle(
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test throttle`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/metadata/throttle.ts packages/shared/src/metadata/throttle.test.ts
@@ -220,7 +220,7 @@ git commit -m "feat(shared): add a shared rate-limiting throttle for metadata lo
   `searchRelease(fetchFn: FetchLike, artist: string, album: string): Promise<MusicBrainzReleaseMatch | null>`.
   Consumed by `enrichment.ts` (Task 6).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/metadata/musicbrainz.test.ts
@@ -308,12 +308,12 @@ describe("searchRelease", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test musicbrainz`
 Expected: FAIL — cannot find module `./musicbrainz`.
 
-- [ ] **Step 3: Write `packages/shared/src/metadata/musicbrainz.ts`**
+- [x] **Step 3: Write `packages/shared/src/metadata/musicbrainz.ts`**
 
 ```typescript
 export type FetchLike = (
@@ -377,12 +377,12 @@ export async function searchRelease(
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test musicbrainz`
 Expected: PASS (7 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/metadata/musicbrainz.ts packages/shared/src/metadata/musicbrainz.test.ts
@@ -402,7 +402,7 @@ git commit -m "feat(shared): add MusicBrainz release lookup client"
 - Produces: `getFrontCoverUrl(fetchFn: FetchLike, releaseMbid: string): Promise<string | null>`.
   Consumed by `enrichment.ts` (Task 6).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // packages/shared/src/metadata/coverArt.test.ts
@@ -429,12 +429,12 @@ describe("getFrontCoverUrl", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/shared test coverArt`
 Expected: FAIL — cannot find module `./coverArt`.
 
-- [ ] **Step 3: Write `packages/shared/src/metadata/coverArt.ts`**
+- [x] **Step 3: Write `packages/shared/src/metadata/coverArt.ts`**
 
 ```typescript
 import type { FetchLike } from "./musicbrainz";
@@ -456,12 +456,12 @@ export async function getFrontCoverUrl(
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `pnpm --filter @aura/shared test coverArt`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/metadata/coverArt.ts packages/shared/src/metadata/coverArt.test.ts
@@ -479,7 +479,7 @@ git commit -m "feat(shared): add Cover Art Archive front-cover lookup client"
 - Produces: `searchRelease`, `getFrontCoverUrl`, `createThrottle` and their
   types, re-exported from `@aura/shared`. Consumed by `enrichment.ts` (Task 6).
 
-- [ ] **Step 1: Add the exports**
+- [x] **Step 1: Add the exports**
 
 Append to `packages/shared/src/index.ts`:
 
@@ -491,12 +491,12 @@ export { createThrottle } from "./metadata/throttle";
 export type { Sleep, ThrottleDeps } from "./metadata/throttle";
 ```
 
-- [ ] **Step 2: Run the whole shared suite**
+- [x] **Step 2: Run the whole shared suite**
 
 Run: `pnpm --filter @aura/shared test`
 Expected: PASS (37 tests — 22 from Phase 2a plus 15 new).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/shared/src/index.ts
@@ -521,7 +521,7 @@ git commit -m "feat(shared): export the metadata enrichment APIs"
   now also returns `artworkUrl`/`releaseDate` when present. Consumed by
   `enrichment.ts` (Task 6).
 
-- [ ] **Step 1: Write the failing test for the migration helper**
+- [x] **Step 1: Write the failing test for the migration helper**
 
 ```typescript
 // apps/mobile/src/library/migration.test.ts
@@ -556,12 +556,12 @@ describe("ensureColumn", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `pnpm --filter @aura/mobile test migration`
 Expected: FAIL — `ensureColumn` is not exported from `./database`.
 
-- [ ] **Step 3: Add the migration helper, schema columns, and new methods to `database.ts`**
+- [x] **Step 3: Add the migration helper, schema columns, and new methods to `database.ts`**
 
 Add the migration helper near the top of the file, after the `SCHEMA` constant:
 
@@ -707,22 +707,22 @@ Add the three new methods next to `clearLibrary`:
     },
 ```
 
-- [ ] **Step 4: Run to verify the migration test passes**
+- [x] **Step 4: Run to verify the migration test passes**
 
 Run: `pnpm --filter @aura/mobile test migration`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 6: Run the full mobile suite**
+- [x] **Step 6: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — no regressions in the existing suites.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/mobile/src/library/database.ts apps/mobile/src/library/migration.test.ts
@@ -751,7 +751,7 @@ clients and the database) are already independently tested, and mocking both
 would mostly be re-testing Jest mocks rather than real behavior, the same
 judgment call made for `scanner.ts` in Phase 2a.
 
-- [ ] **Step 1: Write `apps/mobile/src/metadata/enrichment.ts`**
+- [x] **Step 1: Write `apps/mobile/src/metadata/enrichment.ts`**
 
 ```typescript
 import * as FileSystem from "expo-file-system";
@@ -812,12 +812,12 @@ export async function enrichLibrary(db: LibraryDb): Promise<EnrichmentResult> {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/mobile/src/metadata/enrichment.ts
@@ -843,7 +843,7 @@ invisible on screen until the user happened to remount `HomeScreen` or
 `LibraryScreen` — the whole point of this phase (seeing real artwork appear)
 would go unobserved.
 
-- [ ] **Step 1: Write `apps/mobile/src/store/libraryVersionStore.ts`**
+- [x] **Step 1: Write `apps/mobile/src/store/libraryVersionStore.ts`**
 
 ```typescript
 import { create } from "zustand";
@@ -859,7 +859,7 @@ export const useLibraryVersionStore = create<LibraryVersionState>((set) => ({
 }));
 ```
 
-- [ ] **Step 2: Modify `apps/mobile/src/hooks/useLibraryData.ts`**
+- [x] **Step 2: Modify `apps/mobile/src/hooks/useLibraryData.ts`**
 
 Add the import and subscribe to `version`, including it in the reload effect's
 dependency array:
@@ -896,12 +896,12 @@ export function useLibraryData() {
 }
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/mobile/src/store/libraryVersionStore.ts apps/mobile/src/hooks/useLibraryData.ts
@@ -920,14 +920,14 @@ git commit -m "feat(mobile): make Home/Library reactively reload after scan or e
 - Produces: no new exports; `handleScan` chains into enrichment after a
   successful scan, and a new "Enrich Metadata" button allows a manual re-run.
 
-- [ ] **Step 1: Add the imports**
+- [x] **Step 1: Add the imports**
 
 ```typescript
 import { enrichLibrary } from "../metadata/enrichment";
 import { useLibraryVersionStore } from "../store/libraryVersionStore";
 ```
 
-- [ ] **Step 2: Add an `enriching` state and the bump call, alongside the
+- [x] **Step 2: Add an `enriching` state and the bump call, alongside the
   existing `scanning` state**
 
 ```typescript
@@ -937,7 +937,7 @@ import { useLibraryVersionStore } from "../store/libraryVersionStore";
   const bumpLibraryVersion = useLibraryVersionStore((s) => s.bump);
 ```
 
-- [ ] **Step 3: Chain enrichment into `handleScan`, and add `handleEnrich`**
+- [x] **Step 3: Chain enrichment into `handleScan`, and add `handleEnrich`**
 
 Replace the existing `handleScan` function with:
 
@@ -991,7 +991,7 @@ Replace the existing `handleScan` function with:
 complete" alert appears immediately and enrichment continues in the
 background, per the approved design.)
 
-- [ ] **Step 4: Add the "Enrich Metadata" button next to "Scan Music Folder"**
+- [x] **Step 4: Add the "Enrich Metadata" button next to "Scan Music Folder"**
 
 ```tsx
       <View style={styles.group}>
@@ -1012,17 +1012,17 @@ background, per the approved design.)
 (This replaces the existing single-`Pressable` `LIBRARY` group with the two
 rows above.)
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `pnpm --filter @aura/mobile exec tsc --noEmit`
 Expected: no output (clean).
 
-- [ ] **Step 6: Run the full mobile suite**
+- [x] **Step 6: Run the full mobile suite**
 
 Run: `pnpm --filter @aura/mobile test`
 Expected: PASS — no regressions.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/mobile/src/screens/SettingsScreen.tsx
@@ -1035,14 +1035,14 @@ git commit -m "feat(mobile): trigger metadata enrichment after scan and on deman
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Confirm what IS verified**
+- [x] **Step 1: Confirm what IS verified**
 
 Run: `pnpm -r test`
 Record the passing counts. The MusicBrainz client, the Cover Art Archive
 client, the throttle, and the migration helper are all verified against
 mocked HTTP/DB responses.
 
-- [ ] **Step 2: Give the user this checklist to confirm on device**
+- [x] **Step 2: Give the user this checklist to confirm on device**
 
   - Settings → Scan Music Folder, then wait: an "Enrichment complete" alert
     eventually appears (may take a while for a large library — 1 request/sec
@@ -1056,7 +1056,7 @@ mocked HTTP/DB responses.
   - The app remains fully usable (scrolling, playback, search) while
     enrichment runs in the background
 
-- [ ] **Step 3: Report honestly**
+- [x] **Step 3: Report honestly**
 
 State plainly which items are verified by tests and which await the user's
 device confirmation. Do not describe real enrichment results or artwork
