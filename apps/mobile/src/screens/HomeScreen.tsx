@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet } from "react-native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { Album } from "@aura/types";
 import { colors, spacing, typography } from "../theme/tokens";
 import { ArtworkCard } from "../components/ArtworkCard";
 import { provider } from "../providers";
 import { albums, tracks } from "@aura/shared";
 import { usePlayerStore } from "../store/playerStore";
-import type { RootStackParamList } from "../navigation/RootNavigator";
-
-type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -44,7 +40,7 @@ function Section({ title, albums: sectionAlbums }: { title: string; albums: Albu
   );
 }
 
-export function HomeScreen(_props: Props) {
+export function HomeScreen() {
   const [recentlyPlayed, setRecentlyPlayed] = useState<Album[]>([]);
 
   useEffect(() => {
