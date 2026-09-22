@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Album, Track } from "@aura/types";
 import { getLibraryDb } from "../providers";
+import { useLibraryVersionStore } from "../store/libraryVersionStore";
 
 export function useLibraryData() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
+  const version = useLibraryVersionStore((s) => s.version);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -21,7 +23,7 @@ export function useLibraryData() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(reload, [reload]);
+  useEffect(reload, [reload, version]);
 
   return { tracks, albums, loading, reload };
 }
