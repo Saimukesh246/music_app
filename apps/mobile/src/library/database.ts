@@ -1,0 +1,255 @@
+import * as SQLite from "expo-sqlite";
+import type { Album, Artist, AudioQualityInfo, Track } from "@aura/types";
+
+export interface ScannedTrack {
+  id: string;
+  uri: string;
+  title: string;
+  artistName: string;
+  albumTitle: string;
+  trackNumber?: number;
+  quality: AudioQualityInfo;
+}
+
+export interface LibraryDb {
+  upsertScannedTrack(input: ScannedTrack): Promise<void>;
+  getAllTracks(): Promise<Track[]>;
+  getAlbums(): Promise<Album[]>;
+  getArtists(): Promise<Artist[]>;
+  searchTracks(query: string): Promise<Track[]>;
+  setFavorite(trackId: string, isFavorite: boolean): Promise<void>;
+  getFavoriteIds(): Promise<string[]>;
+  clearLibrary(): Promise<void>;
+}
+
+const SCHEMA = `
+PRAGMA journal_mode = WAL;
+
+CREATE TABLE IF NOT EXISTS artists (
+  id   TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS albums (
+  id        TEXT PRIMARY KEY NOT NULL,
+  title     TEXT NOT NULL,
+  artist_id TEXT NOT NULL REFERENCES artists(id),
+  UNIQUE (title, artist_id)
+);
+
+CREATE TABLE IF NOT EXISTS tracks (
+  id             TEXT PRIMARY KEY NOT NULL,
+  uri            TEXT NOT NULL UNIQUE,
+  title          TEXT NOT NULL,
+  artist_id      TEXT NOT NULL REFERENCES artists(id),
+  album_id       TEXT NOT NULL REFERENCES albums(id),
+  track_number   INTEGER,
+  format         TEXT NOT NULL,
+  bit_depth      INTEGER,
+  sample_rate_hz INTEGER,
+  channels       INTEGER,
+  bitrate_kbps   INTEGER,
+  duration_sec   REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS favorites (
+  track_id TEXT PRIMARY KEY NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS playlists (
+  id    TEXT PRIMARY KEY NOT NULL,
+  title TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS playlist_tracks (
+  playlist_id TEXT NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+  track_id    TEXT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+  position    INTEGER NOT NULL,
+  PRIMARY KEY (playlist_id, track_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tracks_album  ON tracks(album_id);
+CREATE INDEX IF NOT EXISTS idx_tracks_artist ON tracks(artist_id);
+CREATE INDEX IF NOT EXISTS idx_tracks_title  ON tracks(title);
+`;
+
+interface TrackRow {
+  id: string;
+  title: string;
+  artist_id: string;
+  artist_name: string;
+  album_id: string;
+  album_title: string;
+  format: string;
+  bit_depth: number | null;
+  sample_rate_hz: number | null;
+  channels: number | null;
+  bitrate_kbps: number | null;
+  duration_sec: number;
+}
+
+function rowToTrack(row: TrackRow): Track {
+  const quality: AudioQualityInfo = {
+    format: row.format as AudioQualityInfo["format"],
+    durationSec: row.duration_sec,
+  };
+  if (row.bit_depth !== null) quality.bitDepth = row.bit_depth;
+  if (row.sample_rate_hz !== null) quality.sampleRateHz = row.sample_rate_hz;
+  if (row.channels !== null) quality.channels = row.channels;
+  if (row.bitrate_kbps !== null) quality.bitrateKbps = row.bitrate_kbps;
+
+  return {
+    id: row.id,
+    title: row.title,
+    artistId: row.artist_id,
+    artistName: row.artist_name,
+    albumId: row.album_id,
+    albumTitle: row.album_title,
+    quality,
+  };
+}
+
+const TRACK_SELECT = `
+SELECT tracks.id, tracks.title, tracks.artist_id, tracks.album_id,
+       tracks.format, tracks.bit_depth, tracks.sample_rate_hz,
+       tracks.channels, tracks.bitrate_kbps, tracks.duration_sec,
+       artists.name  AS artist_name,
+       albums.title  AS album_title
+FROM tracks
+JOIN artists ON artists.id = tracks.artist_id
+JOIN albums  ON albums.id  = tracks.album_id
+`;
+
+function slug(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
+export async function openLibrary(): Promise<LibraryDb> {
+  const db = await SQLite.openDatabaseAsync("aura-library.db");
+  await db.execAsync(SCHEMA);
+
+  return {
+    async upsertScannedTrack(input) {
+      const artistId = `artist-${slug(input.artistName)}`;
+      const albumId = `album-${slug(input.albumTitle)}-${slug(input.artistName)}`;
+
+      await db.runAsync(
+        "INSERT OR IGNORE INTO artists (id, name) VALUES (?, ?)",
+        artistId,
+        input.artistName
+      );
+      await db.runAsync(
+        "INSERT OR IGNORE INTO albums (id, title, artist_id) VALUES (?, ?, ?)",
+        albumId,
+        input.albumTitle,
+        artistId
+      );
+      await db.runAsync(
+        `INSERT INTO tracks
+           (id, uri, title, artist_id, album_id, track_number,
+            format, bit_depth, sample_rate_hz, channels, bitrate_kbps, duration_sec)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(uri) DO UPDATE SET
+           title = excluded.title,
+           artist_id = excluded.artist_id,
+           album_id = excluded.album_id,
+           track_number = excluded.track_number,
+           format = excluded.format,
+           bit_depth = excluded.bit_depth,
+           sample_rate_hz = excluded.sample_rate_hz,
+           channels = excluded.channels,
+           bitrate_kbps = excluded.bitrate_kbps,
+           duration_sec = excluded.duration_sec`,
+        input.id,
+        input.uri,
+        input.title,
+        artistId,
+        albumId,
+        input.trackNumber ?? null,
+        input.quality.format,
+        input.quality.bitDepth ?? null,
+        input.quality.sampleRateHz ?? null,
+        input.quality.channels ?? null,
+        input.quality.bitrateKbps ?? null,
+        input.quality.durationSec
+      );
+    },
+
+    async getAllTracks() {
+      const rows = await db.getAllAsync<TrackRow>(
+        `${TRACK_SELECT} ORDER BY albums.title, tracks.track_number, tracks.title`
+      );
+      return rows.map(rowToTrack);
+    },
+
+    async getAlbums() {
+      const rows = await db.getAllAsync<{
+        id: string;
+        title: string;
+        artist_id: string;
+        artist_name: string;
+      }>(
+        `SELECT albums.id, albums.title, albums.artist_id, artists.name AS artist_name
+         FROM albums JOIN artists ON artists.id = albums.artist_id
+         ORDER BY albums.title`
+      );
+      const albums: Album[] = [];
+      for (const row of rows) {
+        const trackIds = await db.getAllAsync<{ id: string }>(
+          "SELECT id FROM tracks WHERE album_id = ? ORDER BY track_number, title",
+          row.id
+        );
+        albums.push({
+          id: row.id,
+          title: row.title,
+          artistId: row.artist_id,
+          artistName: row.artist_name,
+          trackIds: trackIds.map((t) => t.id),
+        });
+      }
+      return albums;
+    },
+
+    async getArtists() {
+      const rows = await db.getAllAsync<{ id: string; name: string }>(
+        "SELECT id, name FROM artists ORDER BY name"
+      );
+      return rows.map((row): Artist => ({ id: row.id, name: row.name }));
+    },
+
+    async searchTracks(query) {
+      const rows = await db.getAllAsync<TrackRow>(
+        `${TRACK_SELECT} WHERE tracks.title LIKE ? OR artists.name LIKE ? OR albums.title LIKE ?
+         ORDER BY tracks.title LIMIT 100`,
+        `%${query}%`,
+        `%${query}%`,
+        `%${query}%`
+      );
+      return rows.map(rowToTrack);
+    },
+
+    async setFavorite(trackId, isFavorite) {
+      if (isFavorite) {
+        await db.runAsync(
+          "INSERT OR IGNORE INTO favorites (track_id) VALUES (?)",
+          trackId
+        );
+      } else {
+        await db.runAsync("DELETE FROM favorites WHERE track_id = ?", trackId);
+      }
+    },
+
+    async getFavoriteIds() {
+      const rows = await db.getAllAsync<{ track_id: string }>(
+        "SELECT track_id FROM favorites"
+      );
+      return rows.map((row) => row.track_id);
+    },
+
+    async clearLibrary() {
+      await db.execAsync(
+        "DELETE FROM playlist_tracks; DELETE FROM favorites; DELETE FROM tracks; DELETE FROM albums; DELETE FROM artists;"
+      );
+    },
+  };
+}
