@@ -33,6 +33,13 @@ export interface LibraryDb {
     data: { musicbrainzId: string; releaseDate?: string; artworkUrl?: string }
   ): Promise<void>;
   setArtistMusicBrainzId(artistId: string, musicbrainzId: string): Promise<void>;
+  getCachedLyrics(
+    trackId: string
+  ): Promise<{ plainLyrics?: string; syncedLyrics?: string; instrumental: boolean } | null>;
+  cacheLyrics(
+    trackId: string,
+    data: { plainLyrics?: string; syncedLyrics?: string; instrumental: boolean }
+  ): Promise<void>;
 }
 
 const SCHEMA = `
@@ -79,6 +86,13 @@ CREATE TABLE IF NOT EXISTS playlist_tracks (
   track_id    TEXT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
   position    INTEGER NOT NULL,
   PRIMARY KEY (playlist_id, track_id)
+);
+
+CREATE TABLE IF NOT EXISTS lyrics (
+  track_id      TEXT PRIMARY KEY NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+  plain_lyrics  TEXT,
+  synced_lyrics TEXT,
+  instrumental  INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_tracks_album  ON tracks(album_id);
@@ -328,6 +342,35 @@ export async function openLibrary(): Promise<LibraryDb> {
         "UPDATE artists SET musicbrainz_id = ? WHERE id = ?",
         musicbrainzId,
         artistId
+      );
+    },
+
+    async getCachedLyrics(trackId) {
+      const row = await db.getFirstAsync<{
+        plain_lyrics: string | null;
+        synced_lyrics: string | null;
+        instrumental: number;
+      }>("SELECT plain_lyrics, synced_lyrics, instrumental FROM lyrics WHERE track_id = ?", trackId);
+      if (!row) return null;
+      return {
+        plainLyrics: row.plain_lyrics ?? undefined,
+        syncedLyrics: row.synced_lyrics ?? undefined,
+        instrumental: row.instrumental === 1,
+      };
+    },
+
+    async cacheLyrics(trackId, data) {
+      await db.runAsync(
+        `INSERT INTO lyrics (track_id, plain_lyrics, synced_lyrics, instrumental)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(track_id) DO UPDATE SET
+           plain_lyrics = excluded.plain_lyrics,
+           synced_lyrics = excluded.synced_lyrics,
+           instrumental = excluded.instrumental`,
+        trackId,
+        data.plainLyrics ?? null,
+        data.syncedLyrics ?? null,
+        data.instrumental ? 1 : 0
       );
     },
   };
