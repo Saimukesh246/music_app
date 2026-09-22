@@ -22,7 +22,12 @@ function SettingsGroup({
       {rows.map((row) => (
         <View key={row.label} style={styles.row}>
           <Text style={typography.body}>{row.label}</Text>
-          <Switch value={row.value} onValueChange={() => onToggle(row.label)} />
+          <Switch
+            value={row.value}
+            onValueChange={() => onToggle(row.label)}
+            trackColor={{ false: colors.border, true: colors.accentMuted }}
+            thumbColor={row.value ? colors.accent : colors.textTertiary}
+          />
         </View>
       ))}
     </View>

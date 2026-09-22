@@ -1,5 +1,5 @@
 import { View, StyleSheet } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createBottomTabNavigator, BottomTabBar } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeScreen } from "../screens/HomeScreen";
@@ -18,6 +18,12 @@ export function TabNavigator() {
   return (
     <View style={styles.container}>
       <Tab.Navigator
+        tabBar={(props) => (
+          <View>
+            <MiniPlayer onPress={() => navigation.navigate("NowPlaying")} />
+            <BottomTabBar {...props} />
+          </View>
+        )}
         screenOptions={{
           headerShown: false,
           tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
@@ -30,7 +36,6 @@ export function TabNavigator() {
         <Tab.Screen name="Library" component={LibraryScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
-      <MiniPlayer onPress={() => navigation.navigate("NowPlaying")} />
     </View>
   );
 }

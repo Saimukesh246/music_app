@@ -10,6 +10,7 @@
       "backgroundColor": "#0A0A0C"
     },
     "ios": { "supportsTablet": false },
-    "android": {}
+    "android": {},
+    "web": { "bundler": "metro" }
   }
 }
