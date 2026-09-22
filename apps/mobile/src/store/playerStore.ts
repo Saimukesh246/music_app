@@ -14,6 +14,7 @@ interface PlayerState {
   playPrevious: () => void;
   addToQueue: (track: Track) => void;
   seekTo: (sec: number) => void;
+  stop: () => void;
 }
 
 function clearTick() {
@@ -69,4 +70,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   addToQueue: (track) => set((s) => ({ queue: [...s.queue, track] })),
 
   seekTo: (sec) => set({ positionSec: sec }),
+
+  stop: () => {
+    clearTick();
+    set({ currentTrack: null, queue: [], isPlaying: false, positionSec: 0 });
+  },
 }));
