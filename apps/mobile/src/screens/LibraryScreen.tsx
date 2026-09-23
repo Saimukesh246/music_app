@@ -76,8 +76,8 @@ function ArtistsTab() {
 // ---------------------------------------------------------------------------
 
 function AlbumsTab() {
-  const { tracks, albums } = useLibraryData();
-  const playTrack = usePlayerStore((s) => s.playTrack);
+  const { albums } = useLibraryData();
+  const navigation = useNavigation<NavProp>();
 
   const sorted = [...albums].sort((a, b) => {
     const artistCmp = a.artistName.localeCompare(b.artistName);
@@ -90,20 +90,17 @@ function AlbumsTab() {
 
   return (
     <ScrollView contentContainerStyle={styles.albumGrid}>
-      {sorted.map((album) => {
-        const albumTracks = tracks.filter((t) => t.albumId === album.id);
-        return (
-          <ArtworkCard
-            key={album.id}
-            title={album.title}
-            subtitle={album.artistName}
-            artworkUrl={album.artworkUrl}
-            onPress={() => {
-              if (albumTracks.length > 0) playTrack(albumTracks[0], albumTracks);
-            }}
-          />
-        );
-      })}
+      {sorted.map((album) => (
+        <ArtworkCard
+          key={album.id}
+          title={album.title}
+          subtitle={album.artistName}
+          artworkUrl={album.artworkUrl}
+          onPress={() => {
+            navigation.navigate("AlbumDetail", { albumId: album.id });
+          }}
+        />
+      ))}
     </ScrollView>
   );
 }

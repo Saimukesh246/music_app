@@ -6,6 +6,9 @@ import { ArtworkCard } from "../components/ArtworkCard";
 import { usePlayerStore } from "../store/playerStore";
 import { useLibraryStore } from "../store/libraryStore";
 import { useLibraryData, type LibraryStats } from "../hooks/useLibraryData";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootNavigator";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -93,13 +96,12 @@ const statStyles = StyleSheet.create({
 function Section({
   title,
   albums: sectionAlbums,
-  tracks,
 }: {
   title: string;
   albums: Album[];
   tracks: Track[];
 }) {
-  const playTrack = usePlayerStore((s) => s.playTrack);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   if (sectionAlbums.length === 0) return null;
 
   return (
@@ -113,8 +115,7 @@ function Section({
             subtitle={album.artistName}
             artworkUrl={album.artworkUrl}
             onPress={() => {
-              const albumTracks = tracks.filter((t) => t.albumId === album.id);
-              if (albumTracks.length > 0) playTrack(albumTracks[0], albumTracks);
+              navigation.navigate("AlbumDetail", { albumId: album.id });
             }}
           />
         ))}

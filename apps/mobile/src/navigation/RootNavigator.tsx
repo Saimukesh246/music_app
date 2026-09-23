@@ -4,12 +4,14 @@ import { TabNavigator } from "./TabNavigator";
 import { NowPlayingScreen } from "../screens/NowPlayingScreen";
 import { PlaylistDetailScreen } from "../screens/PlaylistDetailScreen";
 import { ArtistDetailScreen } from "../screens/ArtistDetailScreen";
+import { AlbumDetailScreen } from "../screens/AlbumDetailScreen";
 
 export type RootStackParamList = {
   Home: undefined;
   NowPlaying: undefined;
   PlaylistDetail: { playlistId: string };
   ArtistDetail: { artistId: string };
+  AlbumDetail: { albumId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,6 +33,10 @@ export function RootNavigator() {
         <Stack.Screen
           name="ArtistDetail"
           component={ArtistDetailScreen}
+        />
+        <Stack.Screen
+          name="AlbumDetail"
+          component={AlbumDetailScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

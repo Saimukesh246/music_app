@@ -53,19 +53,16 @@ export function ArtistDetailScreen({ route, navigation }: Props) {
           <View style={styles.albumsSection}>
             <Text style={[typography.heading, styles.sectionTitle]}>Albums</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {artistAlbums.map((album) => {
-                const albumTracks = artistTracks.filter((t) => t.albumId === album.id);
-                return (
-                  <ArtworkCard
-                    key={album.id}
-                    title={album.title}
-                    artworkUrl={album.artworkUrl}
-                    onPress={() => {
-                      if (albumTracks.length > 0) playTrack(albumTracks[0], albumTracks);
-                    }}
-                  />
-                );
-              })}
+              {artistAlbums.map((album) => (
+                <ArtworkCard
+                  key={album.id}
+                  title={album.title}
+                  artworkUrl={album.artworkUrl}
+                  onPress={() => {
+                    navigation.navigate("AlbumDetail", { albumId: album.id });
+                  }}
+                />
+              ))}
             </ScrollView>
           </View>
         )}
