@@ -217,3 +217,31 @@ describe("usePlayerStore — shuffle", () => {
     expect(q[2].id).toBe(tracks[2].id);
   });
 });
+
+describe("usePlayerStore — sleep timer", () => {
+  it("starts with sleep timer disabled", () => {
+    expect(usePlayerStore.getState().sleepTimerMinutes).toBeNull();
+    expect(usePlayerStore.getState().sleepTimerRemainingSec).toBeNull();
+  });
+
+  it("sets sleep timer and calculates seconds", () => {
+    usePlayerStore.getState().setSleepTimer(15);
+    expect(usePlayerStore.getState().sleepTimerMinutes).toBe(15);
+    expect(usePlayerStore.getState().sleepTimerRemainingSec).toBe(900);
+  });
+
+  it("supports end of track mode (-1)", () => {
+    usePlayerStore.getState().setSleepTimer(-1);
+    expect(usePlayerStore.getState().sleepTimerMinutes).toBe(-1);
+    expect(usePlayerStore.getState().sleepTimerRemainingSec).toBeNull();
+  });
+
+  it("cancels sleep timer when set to null", () => {
+    usePlayerStore.getState().setSleepTimer(30);
+    expect(usePlayerStore.getState().sleepTimerMinutes).toBe(30);
+
+    usePlayerStore.getState().setSleepTimer(null);
+    expect(usePlayerStore.getState().sleepTimerMinutes).toBeNull();
+    expect(usePlayerStore.getState().sleepTimerRemainingSec).toBeNull();
+  });
+});

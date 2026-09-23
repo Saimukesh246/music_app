@@ -13,12 +13,13 @@ import { usePlayerStore } from "../store/playerStore";
 import { useLibraryStore } from "../store/libraryStore";
 import { useLibraryData } from "../hooks/useLibraryData";
 import { usePlaylistStore } from "../store/playlistStore";
+import { useDownloadStore } from "../store/downloadStore";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-type Segment = "Artists" | "Albums" | "Tracks" | "Playlists";
-const SEGMENTS: Segment[] = ["Artists", "Albums", "Tracks", "Playlists"];
+type Segment = "Artists" | "Albums" | "Tracks" | "Playlists" | "Downloaded";
+const SEGMENTS: Segment[] = ["Artists", "Albums", "Tracks", "Playlists", "Downloaded"];
 
 // ---------------------------------------------------------------------------
 // Artists segment
@@ -205,6 +206,38 @@ function PlaylistsTab() {
 }
 
 // ---------------------------------------------------------------------------
+// Downloaded segment
+// ---------------------------------------------------------------------------
+
+function DownloadedTab() {
+  const { tracks } = useLibraryData();
+  const downloadedTracks = useDownloadStore((s) => s.downloadedTracks);
+  const playTrack = usePlayerStore((s) => s.playTrack);
+
+  const downloadedList = tracks.filter((t) => downloadedTracks.has(t.id));
+
+  if (downloadedList.length === 0) {
+    return (
+      <EmptyState message="No downloaded tracks yet. Tap ⬇ DL while playing any track to save for offline listening." />
+    );
+  }
+
+  return (
+    <FlatList
+      data={downloadedList}
+      keyExtractor={(t) => t.id}
+      renderItem={({ item }) => (
+        <TrackRow
+          track={item}
+          onPress={() => playTrack(item, downloadedList)}
+          testID={`downloaded-track-${item.id}`}
+        />
+      )}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Empty state helper
 // ---------------------------------------------------------------------------
 
@@ -252,10 +285,11 @@ export function LibraryScreen() {
 
       {/* Content */}
       <View style={{ flex: 1 }}>
-        {activeSegment === "Artists"   && <ArtistsTab />}
-        {activeSegment === "Albums"    && <AlbumsTab />}
-        {activeSegment === "Tracks"    && <TracksTab />}
-        {activeSegment === "Playlists" && <PlaylistsTab />}
+        {activeSegment === "Artists"    && <ArtistsTab />}
+        {activeSegment === "Albums"     && <AlbumsTab />}
+        {activeSegment === "Tracks"     && <TracksTab />}
+        {activeSegment === "Playlists"  && <PlaylistsTab />}
+        {activeSegment === "Downloaded" && <DownloadedTab />}
       </View>
     </View>
   );

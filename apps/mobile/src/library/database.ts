@@ -70,6 +70,18 @@ export interface LibraryDb {
   renamePlaylist(playlistId: string, title: string): Promise<void>;
   /** Delete a playlist and all its track associations. */
   deletePlaylist(playlistId: string): Promise<void>;
+
+  // ── Downloads ──────────────────────────────────────────────────────────
+  /** Record a downloaded track. */
+  recordDownload(trackId: string, localUri: string, fileSizeBytes: number): Promise<void>;
+  /** Return all downloaded tracks. */
+  getDownloadedTracks(): Promise<{ trackId: string; localUri: string; downloadedAt: number; fileSizeBytes: number }[]>;
+  /** Return the local URI for a downloaded track, or null if not downloaded. */
+  getDownloadedTrackUri(trackId: string): Promise<string | null>;
+  /** Remove a downloaded track entry. */
+  removeDownload(trackId: string): Promise<void>;
+  /** Check if a track is downloaded. */
+  isTrackDownloaded(trackId: string): Promise<boolean>;
 }
 
 const SCHEMA = `
@@ -130,6 +142,13 @@ CREATE TABLE IF NOT EXISTS play_history (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   track_id   TEXT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
   played_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE TABLE IF NOT EXISTS downloaded_tracks (
+  track_id        TEXT PRIMARY KEY NOT NULL,
+  local_uri       TEXT NOT NULL,
+  downloaded_at   INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+  file_size_bytes INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_tracks_album      ON tracks(album_id);
@@ -558,6 +577,53 @@ export async function openLibrary(): Promise<LibraryDb> {
         `DELETE FROM playlists WHERE id = ?`,
         playlistId
       );
+    },
+
+    async recordDownload(trackId, localUri, fileSizeBytes) {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO downloaded_tracks (track_id, local_uri, downloaded_at, file_size_bytes)
+         VALUES (?, ?, strftime('%s','now'), ?)`,
+        trackId,
+        localUri,
+        fileSizeBytes
+      );
+    },
+
+    async getDownloadedTracks() {
+      const rows = await db.getAllAsync<{
+        track_id: string;
+        local_uri: string;
+        downloaded_at: number;
+        file_size_bytes: number;
+      }>(
+        `SELECT track_id, local_uri, downloaded_at, file_size_bytes FROM downloaded_tracks ORDER BY downloaded_at DESC`
+      );
+      return rows.map((r) => ({
+        trackId: r.track_id,
+        localUri: r.local_uri,
+        downloadedAt: r.downloaded_at,
+        fileSizeBytes: r.file_size_bytes,
+      }));
+    },
+
+    async getDownloadedTrackUri(trackId) {
+      const row = await db.getFirstAsync<{ local_uri: string }>(
+        `SELECT local_uri FROM downloaded_tracks WHERE track_id = ?`,
+        trackId
+      );
+      return row ? row.local_uri : null;
+    },
+
+    async removeDownload(trackId) {
+      await db.runAsync(`DELETE FROM downloaded_tracks WHERE track_id = ?`, trackId);
+    },
+
+    async isTrackDownloaded(trackId) {
+      const row = await db.getFirstAsync<{ track_id: string }>(
+        `SELECT track_id FROM downloaded_tracks WHERE track_id = ?`,
+        trackId
+      );
+      return row !== null;
     },
   };
 }

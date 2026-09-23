@@ -22,6 +22,9 @@ interface PlayerState {
   positionSec: number;
   repeatMode: RepeatModeSetting;
   shuffleEnabled: boolean;
+  sleepTimerMinutes: number | null;
+  sleepTimerRemainingSec: number | null;
+  setSleepTimer: (minutes: number | null) => void;
   playTrack: (track: Track, queue?: Track[]) => void;
   togglePlayPause: () => void;
   playNext: () => void;
@@ -61,6 +64,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     // RNTP's own Track type doesn't declare `id`, but toRNTPTrack always
     // sets one, so every active track carries it through at runtime.
     const activeId = (event.track as { id?: string } | undefined)?.id;
+    const prevTrack = get().currentTrack;
+    if (get().sleepTimerMinutes === -1 && prevTrack && activeId !== prevTrack.id) {
+      set({ sleepTimerMinutes: null, sleepTimerRemainingSec: null });
+      void TrackPlayer.pause();
+    }
     set({
       currentTrack: activeId ? trackById.get(activeId) ?? null : null,
       positionSec: 0,
@@ -74,10 +82,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     }
   );
 
-  // True only while a transient interruption (RemoteDuck with
-  // permanent: false) is in effect and nothing else has touched playback
-  // since. Cleared by every explicit user/UI action below.
   let pausedByInterruption = false;
+  let sleepTimerInterval: ReturnType<typeof setInterval> | null = null;
 
   TrackPlayer.addEventListener(
     Event.RemoteDuck,
@@ -98,6 +104,41 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     positionSec: 0,
     repeatMode: "off",
     shuffleEnabled: false,
+    sleepTimerMinutes: null,
+    sleepTimerRemainingSec: null,
+
+    setSleepTimer: (minutes: number | null) => {
+      if (sleepTimerInterval) {
+        clearInterval(sleepTimerInterval);
+        sleepTimerInterval = null;
+      }
+
+      if (minutes === null) {
+        set({ sleepTimerMinutes: null, sleepTimerRemainingSec: null });
+        return;
+      }
+
+      if (minutes === -1) {
+        // End of track mode
+        set({ sleepTimerMinutes: -1, sleepTimerRemainingSec: null });
+        return;
+      }
+
+      const totalSec = minutes * 60;
+      set({ sleepTimerMinutes: minutes, sleepTimerRemainingSec: totalSec });
+
+      sleepTimerInterval = setInterval(() => {
+        const currentRemaining = get().sleepTimerRemainingSec;
+        if (currentRemaining === null || currentRemaining <= 1) {
+          if (sleepTimerInterval) clearInterval(sleepTimerInterval);
+          sleepTimerInterval = null;
+          set({ sleepTimerMinutes: null, sleepTimerRemainingSec: null });
+          void TrackPlayer.pause();
+        } else {
+          set({ sleepTimerRemainingSec: currentRemaining - 1 });
+        }
+      }, 1000);
+    },
 
     playTrack: async (track, queue) => {
       pausedByInterruption = false;
@@ -115,11 +156,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       set({ queue: nextQueue });
 
       const provider = await getProvider();
+      const db = await getLibraryDb();
       const rntpTracks = await Promise.all(
         nextQueue.map(async (queuedTrack) => {
           trackById.set(queuedTrack.id, queuedTrack);
-          const source = await provider.getPlaybackSource(queuedTrack.id);
-          return toRNTPTrack(queuedTrack, source.uri);
+          // Check if track is downloaded locally for instant offline playback
+          let uri: string | null = null;
+          try {
+            uri = await db.getDownloadedTrackUri(queuedTrack.id);
+          } catch {
+            // Fall back to provider
+          }
+          if (!uri) {
+            const source = await provider.getPlaybackSource(queuedTrack.id);
+            uri = source.uri;
+          }
+          return toRNTPTrack(queuedTrack, uri);
         })
       );
 
@@ -128,7 +180,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       await TrackPlayer.play();
 
       // Fire-and-forget: record the play. Never blocks playback.
-      void getLibraryDb().then((db) => db.recordPlay(track.id)).catch(() => undefined);
+      void db.recordPlay(track.id).catch(() => undefined);
     },
 
     togglePlayPause: async () => {
@@ -150,9 +202,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     addToQueue: async (track) => {
       set((s) => ({ queue: [...s.queue, track] }));
       trackById.set(track.id, track);
-      const provider = await getProvider();
-      const source = await provider.getPlaybackSource(track.id);
-      await TrackPlayer.add(toRNTPTrack(track, source.uri));
+      const db = await getLibraryDb();
+      let uri: string | null = null;
+      try {
+        uri = await db.getDownloadedTrackUri(track.id);
+      } catch {
+        // Fall back
+      }
+      if (!uri) {
+        const provider = await getProvider();
+        const source = await provider.getPlaybackSource(track.id);
+        uri = source.uri;
+      }
+      await TrackPlayer.add(toRNTPTrack(track, uri));
     },
 
     seekTo: async (sec) => {

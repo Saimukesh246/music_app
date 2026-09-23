@@ -13,6 +13,10 @@ import { useLibraryStore } from "../store/libraryStore";
 import { enrichLibrary } from "../metadata/enrichment";
 import { enrichAudioFeatures } from "../metadata/audioFeaturesEnrichment";
 import { useLibraryVersionStore } from "../store/libraryVersionStore";
+import { useEqualizerStore } from "../store/equalizerStore";
+import { useDownloadStore } from "../store/downloadStore";
+import { EqualizerModal } from "../components/EqualizerModal";
+import { DacInspector } from "../components/DacInspector";
 
 interface SettingsRow {
   label: string;
@@ -64,6 +68,11 @@ export function SettingsScreen() {
 
   const [scanning, setScanning] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [showEqModal, setShowEqModal] = useState(false);
+  const [showDacModal, setShowDacModal] = useState(false);
+  const { selectedPreset, bitPerfect } = useEqualizerStore();
+  const { downloadedTracks, deleteDownload } = useDownloadStore();
+
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(
     getActiveProviderId()
   );
@@ -73,6 +82,26 @@ export function SettingsScreen() {
   useEffect(() => {
     setActiveProviderIdState(getActiveProviderId());
   }, []);
+
+  function handleClearDownloads() {
+    Alert.alert(
+      "Purge Offline Cache",
+      `Are you sure you want to delete ${downloadedTracks.size} downloaded track(s)?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete All",
+          style: "destructive",
+          onPress: async () => {
+            for (const trackId of Array.from(downloadedTracks.keys())) {
+              await deleteDownload(trackId);
+            }
+            Alert.alert("Cache Cleared", "All offline downloads removed.");
+          },
+        },
+      ]
+    );
+  }
 
   async function handleSetProvider(id: ProviderId) {
     await setActiveProvider(id);
@@ -178,10 +207,62 @@ export function SettingsScreen() {
           </Pressable>
         ))}
       </View>
+
+      <View style={styles.group}>
+        <Text style={[typography.label, styles.groupTitle]}>AUDIOPHILE & DSP</Text>
+        <Pressable
+          onPress={() => setShowEqModal(true)}
+          style={styles.actionRow}
+          testID="settings-open-eq"
+        >
+          <View>
+            <Text style={typography.body}>Equalizer & Bit-Perfect</Text>
+            <Text style={[typography.caption, { color: colors.accent, marginTop: 2 }]}>
+              {bitPerfect ? "Bit-Perfect Mode (DSP Bypassed)" : `${selectedPreset} Active`}
+            </Text>
+          </View>
+          <Text style={styles.arrowText}>›</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setShowDacModal(true)}
+          style={styles.actionRow}
+          testID="settings-open-dac"
+        >
+          <View>
+            <Text style={typography.body}>Hardware DAC & Output Route</Text>
+            <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 2 }]}>
+              Inspect signal chain & audio path
+            </Text>
+          </View>
+          <Text style={styles.arrowText}>›</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.group}>
+        <Text style={[typography.label, styles.groupTitle]}>OFFLINE DOWNLOADS</Text>
+        <Pressable
+          onPress={handleClearDownloads}
+          style={styles.actionRow}
+          testID="settings-clear-downloads"
+        >
+          <View>
+            <Text style={typography.body}>Purge Offline Cache</Text>
+            <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 2 }]}>
+              Delete all downloaded audio files from device
+            </Text>
+          </View>
+          <Text style={{ color: colors.error, fontSize: 13, fontWeight: "600" }}>Clear</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.group}>
         <Text style={[typography.label, styles.groupTitle]}>ABOUT</Text>
-        <Text style={[typography.caption, styles.about]}>AURA 0.0.1 — Phase 5</Text>
+        <Text style={[typography.caption, styles.about]}>AURA 0.0.1 — Phase 8 (Audiophile Lossless)</Text>
       </View>
+
+      <EqualizerModal visible={showEqModal} onClose={() => setShowEqModal(false)} />
+      {showDacModal && <DacInspector />}
     </ScrollView>
   );
 }
@@ -245,5 +326,16 @@ const styles = StyleSheet.create({
   },
   sourceText: {
     flex: 1,
+  },
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  arrowText: {
+    fontSize: 20,
+    color: colors.textTertiary,
   },
 });
