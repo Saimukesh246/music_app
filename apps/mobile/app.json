@@ -2,17 +2,37 @@
   "expo": {
     "name": "AURA",
     "slug": "aura",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#0A0A0C",
+    "backgroundColor": "#0f0f14",
     "splash": {
-      "backgroundColor": "#0A0A0C"
+      "backgroundColor": "#0f0f14",
+      "resizeMode": "contain"
     },
-    "ios": { "supportsTablet": false },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.aura.music"
+    },
     "android": {
-      "permissions": ["POST_NOTIFICATIONS"]
+      "package": "com.aura.music",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "POST_NOTIFICATIONS",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "WAKE_LOCK",
+        "READ_MEDIA_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#0f0f14"
+      }
     },
-    "web": { "bundler": "metro" }
+    "web": {
+      "bundler": "metro"
+    }
   }
 }
