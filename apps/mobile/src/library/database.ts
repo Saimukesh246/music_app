@@ -54,6 +54,22 @@ export interface LibraryDb {
    * `sinceEpoch` (Unix seconds). Tracks with zero plays are omitted.
    */
   getPlayCounts(sinceEpoch: number): Promise<Map<string, number>>;
+
+  // ── Playlists ──────────────────────────────────────────────────────────
+  /** Create a new playlist and return its generated UUID. */
+  createPlaylist(title: string): Promise<string>;
+  /** Return all playlists ordered by title. */
+  getPlaylists(): Promise<{ id: string; title: string }[]>;
+  /** Return ordered tracks belonging to a playlist. */
+  getPlaylistTracks(playlistId: string): Promise<Track[]>;
+  /** Append a track to a playlist (idempotent on duplicate). */
+  addTrackToPlaylist(playlistId: string, trackId: string): Promise<void>;
+  /** Remove a track from a playlist. */
+  removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void>;
+  /** Rename a playlist. */
+  renamePlaylist(playlistId: string, title: string): Promise<void>;
+  /** Delete a playlist and all its track associations. */
+  deletePlaylist(playlistId: string): Promise<void>;
 }
 
 const SCHEMA = `
@@ -477,6 +493,71 @@ export async function openLibrary(): Promise<LibraryDb> {
         map.set(row.track_id, row.cnt);
       }
       return map;
+    },
+
+    // ── Playlists ─────────────────────────────────────────────────────────
+
+    async createPlaylist(title) {
+      const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      await db.runAsync(
+        `INSERT INTO playlists (id, title) VALUES (?, ?)`,
+        id,
+        title
+      );
+      return id;
+    },
+
+    async getPlaylists() {
+      return db.getAllAsync<{ id: string; title: string }>(
+        `SELECT id, title FROM playlists ORDER BY title`
+      );
+    },
+
+    async getPlaylistTracks(playlistId) {
+      const rows = await db.getAllAsync<TrackRow>(
+        `${TRACK_SELECT}
+         JOIN playlist_tracks pt ON pt.track_id = tracks.id
+         WHERE pt.playlist_id = ?
+         ORDER BY pt.position`,
+        playlistId
+      );
+      return rows.map(rowToTrack);
+    },
+
+    async addTrackToPlaylist(playlistId, trackId) {
+      await db.runAsync(
+        `INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id, position)
+         VALUES (?, ?, COALESCE(
+           (SELECT MAX(position) + 1 FROM playlist_tracks WHERE playlist_id = ?),
+           0
+         ))`,
+        playlistId,
+        trackId,
+        playlistId
+      );
+    },
+
+    async removeTrackFromPlaylist(playlistId, trackId) {
+      await db.runAsync(
+        `DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?`,
+        playlistId,
+        trackId
+      );
+    },
+
+    async renamePlaylist(playlistId, title) {
+      await db.runAsync(
+        `UPDATE playlists SET title = ? WHERE id = ?`,
+        title,
+        playlistId
+      );
+    },
+
+    async deletePlaylist(playlistId) {
+      await db.runAsync(
+        `DELETE FROM playlists WHERE id = ?`,
+        playlistId
+      );
     },
   };
 }
