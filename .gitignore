@@ -12,3 +12,5 @@ __pycache__/
 *.pyc
 .pytest_cache/
 apps/api/aura.db
+.env
+*.env
