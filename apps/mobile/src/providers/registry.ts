@@ -2,13 +2,14 @@ import type { MusicProvider } from "@aura/shared";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { openLibrary } from "../library/database";
 import { createLocalProvider } from "../library/localProvider";
-import { InternetArchiveProvider } from "@aura/shared";
+import { InternetArchiveProvider, AuraCloudProvider } from "@aura/shared";
+import { useAuthStore } from "../store/authStore";
 
 // ---------------------------------------------------------------------------
 // Provider IDs
 // ---------------------------------------------------------------------------
 
-export type ProviderId = "local" | "internet-archive";
+export type ProviderId = "local" | "internet-archive" | "aura-cloud";
 
 export interface ProviderEntry {
   id: ProviderId;
@@ -27,6 +28,11 @@ export const REGISTERED_PROVIDERS: ProviderEntry[] = [
     name: "Internet Archive",
     description: "Free, open, legally streamable recordings from archive.org",
   },
+  {
+    id: "aura-cloud",
+    name: "Aura Cloud (Supabase)",
+    description: "Lossless streaming & cloud library sync backed by Supabase PostgreSQL",
+  },
 ];
 
 const STORAGE_KEY = "aura.activeProviderId";
@@ -38,6 +44,7 @@ const DEFAULT_PROVIDER_ID: ProviderId = "local";
 
 let localProviderPromise: Promise<MusicProvider> | null = null;
 let iaProvider: MusicProvider | null = null;
+let auraCloudProvider: MusicProvider | null = null;
 
 function getLocalProvider(): Promise<MusicProvider> {
   if (!localProviderPromise) {
@@ -51,6 +58,17 @@ function getIAProvider(): MusicProvider {
     iaProvider = new InternetArchiveProvider(fetch);
   }
   return iaProvider;
+}
+
+function getAuraCloudProvider(): MusicProvider {
+  if (!auraCloudProvider) {
+    auraCloudProvider = new AuraCloudProvider({
+      getBaseUrl: () => useAuthStore.getState().apiBaseUrl,
+      getToken: () => useAuthStore.getState().token,
+      fetch,
+    });
+  }
+  return auraCloudProvider;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,14 +85,18 @@ export async function getActiveProvider(): Promise<MusicProvider> {
   if (!_cachedActiveId) {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      _cachedActiveId =
-        stored === "internet-archive" ? "internet-archive" : DEFAULT_PROVIDER_ID;
+      if (stored === "internet-archive" || stored === "aura-cloud" || stored === "local") {
+        _cachedActiveId = stored as ProviderId;
+      } else {
+        _cachedActiveId = DEFAULT_PROVIDER_ID;
+      }
     } catch {
       _cachedActiveId = DEFAULT_PROVIDER_ID;
     }
   }
 
   if (_cachedActiveId === "internet-archive") return getIAProvider();
+  if (_cachedActiveId === "aura-cloud") return getAuraCloudProvider();
   return getLocalProvider();
 }
 

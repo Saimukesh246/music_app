@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, Switch, Pressable, Alert, StyleSheet } from "react-native";
+import { ScrollView, View, Text, Switch, Pressable, Alert, StyleSheet, ActivityIndicator } from "react-native";
 import { useState, useEffect } from "react";
 import { colors, spacing, typography } from "../theme/tokens";
 import { scanMusicFolder } from "../library/scanner";
@@ -15,8 +15,10 @@ import { enrichAudioFeatures } from "../metadata/audioFeaturesEnrichment";
 import { useLibraryVersionStore } from "../store/libraryVersionStore";
 import { useEqualizerStore } from "../store/equalizerStore";
 import { useDownloadStore } from "../store/downloadStore";
+import { useAuthStore } from "../store/authStore";
 import { EqualizerModal } from "../components/EqualizerModal";
 import { DacInspector } from "../components/DacInspector";
+import { AuthModal } from "../components/AuthModal";
 
 interface SettingsRow {
   label: string;
@@ -70,8 +72,17 @@ export function SettingsScreen() {
   const [enriching, setEnriching] = useState(false);
   const [showEqModal, setShowEqModal] = useState(false);
   const [showDacModal, setShowDacModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   const { selectedPreset, bitPerfect } = useEqualizerStore();
   const { downloadedTracks, deleteDownload } = useDownloadStore();
+  const {
+    isAuthenticated,
+    user,
+    logout,
+    syncCloudData,
+    isSyncing,
+  } = useAuthStore();
 
   const [activeProviderId, setActiveProviderIdState] = useState<ProviderId>(
     getActiveProviderId()
@@ -106,6 +117,18 @@ export function SettingsScreen() {
   async function handleSetProvider(id: ProviderId) {
     await setActiveProvider(id);
     setActiveProviderIdState(id);
+  }
+
+  async function handleSyncCloud() {
+    const result = await syncCloudData();
+    if (result) {
+      Alert.alert(
+        "Sync Complete",
+        `Synced ${result.favoritesCount} favorite(s) and ${result.playlistsCount} playlist(s) with Supabase Cloud.`
+      );
+    } else {
+      Alert.alert("Sync Failed", "Could not sync with Aura Cloud. Check server connection.");
+    }
   }
 
   async function handleScan() {
@@ -158,16 +181,68 @@ export function SettingsScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={[typography.title, styles.title]}>Settings</Text>
+
+      {/* AURA CLOUD & SYNC */}
+      <View style={styles.group}>
+        <Text style={[typography.label, styles.groupTitle]}>AURA CLOUD & SYNC</Text>
+        {isAuthenticated ? (
+          <View style={styles.cloudCard}>
+            <View style={styles.cloudInfoRow}>
+              <View>
+                <Text style={styles.cloudEmailText}>{user?.email ?? "Connected User"}</Text>
+                <Text style={styles.cloudStatusText}>✓ Connected (Supabase PostgreSQL)</Text>
+              </View>
+              <Pressable
+                onPress={() => void logout()}
+                style={styles.cloudLogoutButton}
+                testID="settings-cloud-logout"
+              >
+                <Text style={styles.cloudLogoutText}>Sign Out</Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              onPress={handleSyncCloud}
+              disabled={isSyncing}
+              style={styles.cloudSyncButton}
+              testID="settings-cloud-sync"
+            >
+              {isSyncing ? (
+                <ActivityIndicator size="small" color="#0f0f14" />
+              ) : (
+                <Text style={styles.cloudSyncButtonText}>⇄ Sync Library & Playlists</Text>
+              )}
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => setShowAuthModal(true)}
+            style={styles.cloudConnectRow}
+            testID="settings-cloud-connect"
+          >
+            <View>
+              <Text style={typography.body}>Connect Aura Cloud Account</Text>
+              <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 2 }]}>
+                Stream lossless audio & sync playlists with Supabase
+              </Text>
+            </View>
+            <Text style={{ color: colors.accent, fontWeight: "600" }}>Sign In ›</Text>
+          </Pressable>
+        )}
+      </View>
+
       <SettingsGroup
         title="Playback"
         rows={playback}
         onToggle={(label) => toggle(playback, setPlayback, label)}
       />
+
       <SettingsGroup
         title="Appearance"
         rows={appearance}
         onToggle={(label) => toggle(appearance, setAppearance, label)}
       />
+
       <View style={styles.group}>
         <Text style={[typography.label, styles.groupTitle]}>LIBRARY</Text>
         <Pressable style={styles.row} onPress={handleScan} disabled={scanning}>
@@ -181,11 +256,12 @@ export function SettingsScreen() {
           </Text>
         </Pressable>
       </View>
+
       <View style={styles.group}>
         <Text style={[typography.label, styles.groupTitle]}>MUSIC SOURCE</Text>
         <Text style={[typography.caption, styles.sourceHint]}>
           Choose where AURA fetches music. Local Library uses your device files.
-          Internet Archive streams free, legally available recordings.
+          Internet Archive streams open recordings. Aura Cloud streams lossless from Supabase.
         </Text>
         {getRegisteredProviders().map((entry) => (
           <Pressable
@@ -258,11 +334,12 @@ export function SettingsScreen() {
 
       <View style={styles.group}>
         <Text style={[typography.label, styles.groupTitle]}>ABOUT</Text>
-        <Text style={[typography.caption, styles.about]}>AURA 0.0.1 — Phase 8 (Audiophile Lossless)</Text>
+        <Text style={[typography.caption, styles.about]}>AURA 0.0.1 — Phase 10 (Aura Cloud & Lossless)</Text>
       </View>
 
       <EqualizerModal visible={showEqModal} onClose={() => setShowEqModal(false)} />
       {showDacModal && <DacInspector />}
+      <AuthModal visible={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </ScrollView>
   );
 }
@@ -296,6 +373,59 @@ const styles = StyleSheet.create({
   },
   about: {
     paddingHorizontal: spacing.md,
+  },
+  cloudCard: {
+    backgroundColor: "#161620",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#28283a",
+    marginHorizontal: spacing.md,
+    padding: 14,
+    gap: 12,
+  },
+  cloudInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cloudEmailText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#f5f5f7",
+  },
+  cloudStatusText: {
+    fontSize: 12,
+    color: "#4cd964",
+    marginTop: 2,
+  },
+  cloudLogoutButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: "#222230",
+    borderRadius: 6,
+  },
+  cloudLogoutText: {
+    fontSize: 12,
+    color: "#bbb",
+  },
+  cloudSyncButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cloudSyncButtonText: {
+    color: "#0f0f14",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  cloudConnectRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   sourceHint: {
     paddingHorizontal: spacing.md,

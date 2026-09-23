@@ -40,11 +40,22 @@ def login(body: UserLogin, db: sqlite3.Connection = Depends(get_db)):
     return TokenResponse(access_token=token)
 
 
-def require_user_id(authorization: str = Header(default="")) -> int:
-    if not authorization.startswith("Bearer "):
+from typing import Optional
+from fastapi import Header, Query
+
+def require_user_id(
+    authorization: str = Header(default=""),
+    token: Optional[str] = Query(default=None),
+) -> int:
+    raw_token = ""
+    if authorization.startswith("Bearer "):
+        raw_token = authorization.removeprefix("Bearer ")
+    elif token:
+        raw_token = token
+    else:
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
-    user_id = decode_access_token(authorization.removeprefix("Bearer "))
+    user_id = decode_access_token(raw_token)
     if user_id is None:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 

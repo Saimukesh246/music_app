@@ -38,6 +38,9 @@ jest.mock("@aura/shared", () => ({
   InternetArchiveProvider: class {
     readonly id = "internet-archive";
   },
+  AuraCloudProvider: class {
+    readonly id = "aura-cloud";
+  },
 }));
 
 // Now import the module under test (static mocks above apply)
@@ -63,12 +66,13 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("Provider registry", () => {
-  it("getRegisteredProviders returns both local and internet-archive", () => {
+  it("getRegisteredProviders returns local, internet-archive, and aura-cloud", () => {
     const entries = getRegisteredProviders();
     const ids = entries.map((e) => e.id);
     expect(ids).toContain("local");
     expect(ids).toContain("internet-archive");
-    expect(entries.length).toBe(2);
+    expect(ids).toContain("aura-cloud");
+    expect(entries.length).toBe(3);
   });
 
   it("getProvider() delegates to getActiveProvider() (backwards compat)", async () => {
@@ -80,23 +84,25 @@ describe("Provider registry", () => {
   it("setActiveProvider stores the id so getActiveProviderId reflects it immediately", async () => {
     await setActiveProvider("internet-archive");
     expect(getActiveProviderId()).toBe("internet-archive");
+    await setActiveProvider("aura-cloud");
+    expect(getActiveProviderId()).toBe("aura-cloud");
     await setActiveProvider("local");
     expect(getActiveProviderId()).toBe("local");
   });
 
   it("setActiveProvider updates getActiveProviderId immediately", async () => {
-    await setActiveProvider("internet-archive");
-    expect(getActiveProviderId()).toBe("internet-archive");
+    await setActiveProvider("aura-cloud");
+    expect(getActiveProviderId()).toBe("aura-cloud");
   });
 
-  it("getActiveProvider returns internet-archive after setActiveProvider", async () => {
-    await setActiveProvider("internet-archive");
+  it("getActiveProvider returns aura-cloud after setActiveProvider", async () => {
+    await setActiveProvider("aura-cloud");
     const provider = await getActiveProvider();
-    expect(provider.id).toBe("internet-archive");
+    expect(provider.id).toBe("aura-cloud");
   });
 
   it("getActiveProvider returns local after switching back", async () => {
-    await setActiveProvider("internet-archive");
+    await setActiveProvider("aura-cloud");
     await setActiveProvider("local");
     const provider = await getActiveProvider();
     expect(provider.id).toBe("local");
