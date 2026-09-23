@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, spacing, radii, typography } from "../theme/tokens";
 import { usePlayerStore } from "../store/playerStore";
 import { useLibraryStore } from "../store/libraryStore";
 import { QualityBadge } from "../components/QualityBadge";
+import { SeekBar } from "../components/SeekBar";
+import { QueueSheet } from "../components/QueueSheet";
 import { useLyrics } from "../hooks/useLyrics";
 import { LyricsView } from "../components/LyricsView";
 import type { RootStackParamList } from "../navigation/RootNavigator";
@@ -19,26 +21,30 @@ const REPEAT_LABEL: Record<string, string> = {
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60)
-    .toString()
-    .padStart(2, "0");
+  const s = Math.floor(sec % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
 }
 
 export function NowPlayingScreen({ navigation }: Props) {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const positionSec = usePlayerStore((s) => s.positionSec);
-  const togglePlayPause = usePlayerStore((s) => s.togglePlayPause);
-  const playNext = usePlayerStore((s) => s.playNext);
-  const playPrevious = usePlayerStore((s) => s.playPrevious);
-  const repeatMode = usePlayerStore((s) => s.repeatMode);
-  const cycleRepeatMode = usePlayerStore((s) => s.cycleRepeatMode);
-  const isFavorite = useLibraryStore((s) =>
+  const currentTrack  = usePlayerStore((s) => s.currentTrack);
+  const isPlaying     = usePlayerStore((s) => s.isPlaying);
+  const positionSec   = usePlayerStore((s) => s.positionSec);
+  const repeatMode    = usePlayerStore((s) => s.repeatMode);
+  const shuffleEnabled = usePlayerStore((s) => s.shuffleEnabled);
+  const togglePlayPause  = usePlayerStore((s) => s.togglePlayPause);
+  const playNext         = usePlayerStore((s) => s.playNext);
+  const playPrevious     = usePlayerStore((s) => s.playPrevious);
+  const cycleRepeatMode  = usePlayerStore((s) => s.cycleRepeatMode);
+  const toggleShuffle    = usePlayerStore((s) => s.toggleShuffle);
+  const seekTo           = usePlayerStore((s) => s.seekTo);
+
+  const isFavorite     = useLibraryStore((s) =>
     currentTrack ? s.isFavorite(currentTrack.id) : false
   );
   const toggleFavorite = useLibraryStore((s) => s.toggleFavorite);
+
   const [showLyrics, setShowLyrics] = useState(false);
+  const [showQueue, setShowQueue]   = useState(false);
   const lyrics = useLyrics(currentTrack);
 
   if (!currentTrack) {
@@ -49,14 +55,42 @@ export function NowPlayingScreen({ navigation }: Props) {
     );
   }
 
-  const progress = Math.min(1, positionSec / currentTrack.quality.durationSec);
+  const durationSec = currentTrack.quality.durationSec || 1;
+  const progress    = Math.min(1, positionSec / durationSec);
+
+  function handleSeek(ratio: number) {
+    void seekTo(ratio * durationSec);
+  }
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
-        <Text style={typography.caption}>Close</Text>
-      </Pressable>
+      {/* ── Background tint from artwork (low-opacity blur stand-in) ── */}
+      {currentTrack.artworkUrl ? (
+        <Image
+          source={{ uri: currentTrack.artworkUrl }}
+          style={styles.bgTint}
+          blurRadius={40}
+          resizeMode="cover"
+          accessibilityElementsHidden
+        />
+      ) : null}
 
+      {/* ── Header row ── */}
+      <View style={styles.headerRow}>
+        <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close">
+          <Text style={[typography.caption, styles.headerBtn]}>Close</Text>
+        </Pressable>
+        <Text style={[typography.label, { color: colors.textTertiary }]}>NOW PLAYING</Text>
+        <Pressable
+          onPress={() => setShowQueue(true)}
+          accessibilityLabel="Open queue"
+          testID="open-queue-btn"
+        >
+          <Text style={[typography.caption, styles.headerBtn]}>Queue</Text>
+        </Pressable>
+      </View>
+
+      {/* ── Artwork / Lyrics panel ── */}
       <View style={styles.artworkSlot}>
         {showLyrics ? (
           <LyricsView
@@ -65,11 +99,19 @@ export function NowPlayingScreen({ navigation }: Props) {
             syncedLines={lyrics.syncedLines}
             positionSec={positionSec}
           />
+        ) : currentTrack.artworkUrl ? (
+          <Image
+            source={{ uri: currentTrack.artworkUrl }}
+            style={styles.artworkImage}
+            resizeMode="cover"
+            accessibilityLabel={`Artwork for ${currentTrack.title}`}
+          />
         ) : (
-          <View style={styles.artwork} />
+          <View style={styles.artworkPlaceholder} />
         )}
       </View>
 
+      {/* ── Track meta + quality ── */}
       <View style={styles.meta}>
         <Text style={typography.title} numberOfLines={1}>
           {currentTrack.title}
@@ -79,51 +121,77 @@ export function NowPlayingScreen({ navigation }: Props) {
         </Text>
       </View>
 
-      <QualityBadge quality={currentTrack.quality} />
+      <View style={styles.badgeRow}>
+        <QualityBadge quality={currentTrack.quality} />
+        <Pressable
+          onPress={() => setShowLyrics((v) => !v)}
+          style={styles.lyricsToggle}
+          accessibilityLabel={showLyrics ? "Show artwork" : "Show lyrics"}
+        >
+          <Text style={[typography.label, showLyrics && { color: colors.accent }]}>
+            {showLyrics ? "ARTWORK" : "LYRICS"}
+          </Text>
+        </Pressable>
+      </View>
 
-      <Pressable onPress={() => setShowLyrics((v) => !v)} style={styles.lyricsToggle}>
-        <Text style={[typography.label, showLyrics && { color: colors.accent }]}>
-          {showLyrics ? "ARTWORK" : "LYRICS"}
-        </Text>
-      </Pressable>
-
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+      {/* ── SeekBar scrubber ── */}
+      <View style={styles.seekRow}>
+        <SeekBar progress={progress} onSeek={handleSeek} />
       </View>
       <View style={styles.timeRow}>
         <Text style={typography.caption}>{formatTime(positionSec)}</Text>
-        <Text style={typography.caption}>
-          {formatTime(currentTrack.quality.durationSec)}
-        </Text>
+        <Text style={typography.caption}>{formatTime(durationSec)}</Text>
       </View>
 
+      {/* ── Transport controls ── */}
       <View style={styles.controls}>
-        <Pressable onPress={playPrevious}>
+        {/* Shuffle */}
+        <Pressable
+          onPress={toggleShuffle}
+          accessibilityLabel="Toggle shuffle"
+          testID="shuffle-btn"
+        >
+          <Text
+            style={[styles.controlIcon, shuffleEnabled && { color: colors.accent }]}
+          >
+            ⇄
+          </Text>
+        </Pressable>
+
+        <Pressable onPress={playPrevious} accessibilityLabel="Previous track">
           <Text style={styles.controlIcon}>⏮</Text>
         </Pressable>
-        <Pressable onPress={togglePlayPause}>
+
+        <Pressable onPress={togglePlayPause} accessibilityLabel={isPlaying ? "Pause" : "Play"}>
           <Text style={styles.playPauseIcon}>{isPlaying ? "❚❚" : "▶"}</Text>
         </Pressable>
-        <Pressable onPress={playNext}>
+
+        <Pressable onPress={playNext} accessibilityLabel="Next track">
           <Text style={styles.controlIcon}>⏭</Text>
         </Pressable>
-        <Pressable onPress={cycleRepeatMode}>
+
+        {/* Repeat */}
+        <Pressable onPress={cycleRepeatMode} accessibilityLabel="Cycle repeat mode">
           <Text
-            style={[
-              styles.controlIcon,
-              repeatMode !== "off" && { color: colors.accent },
-            ]}
+            style={[styles.controlIcon, repeatMode !== "off" && { color: colors.accent }]}
           >
             {REPEAT_LABEL[repeatMode]}
           </Text>
         </Pressable>
       </View>
 
-      <Pressable onPress={() => toggleFavorite(currentTrack.id)}>
+      {/* ── Favorite ── */}
+      <Pressable
+        onPress={() => toggleFavorite(currentTrack.id)}
+        accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+      >
         <Text style={{ color: isFavorite ? colors.accent : colors.textTertiary, fontSize: 22 }}>
           {isFavorite ? "♥" : "♡"}
         </Text>
       </Pressable>
+
+      {/* ── Queue sheet ── */}
+      <QueueSheet visible={showQueue} onClose={() => setShowQueue(false)} />
     </View>
   );
 }
@@ -135,49 +203,64 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: "center",
   },
-  closeButton: {
-    alignSelf: "flex-start",
+  bgTint: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.18,
+  },
+  headerRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
+  },
+  headerBtn: {
+    color: colors.textSecondary,
+    paddingVertical: spacing.xs,
   },
   artworkSlot: {
     marginBottom: spacing.lg,
   },
-  artwork: {
+  artworkImage: {
+    width: 280,
+    height: 280,
+    borderRadius: radii.lg,
+  },
+  artworkPlaceholder: {
     width: 280,
     height: 280,
     borderRadius: radii.lg,
     backgroundColor: colors.surfaceRaised,
   },
-  lyricsToggle: {
-    marginTop: spacing.sm,
-  },
   meta: {
     alignItems: "center",
+    marginBottom: spacing.sm,
+    width: "100%",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
     marginBottom: spacing.md,
   },
-  progressTrack: {
-    width: "100%",
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.surfaceRaised,
-    marginTop: spacing.lg,
-    overflow: "hidden",
+  lyricsToggle: {
+    paddingVertical: spacing.xs,
   },
-  progressFill: {
-    height: 4,
-    backgroundColor: colors.accent,
+  seekRow: {
+    width: "100%",
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   timeRow: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: spacing.xs,
     marginBottom: spacing.lg,
   },
   controls: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xl,
+    gap: spacing.lg,
     marginBottom: spacing.lg,
   },
   controlIcon: {

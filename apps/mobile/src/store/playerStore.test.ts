@@ -12,6 +12,9 @@ jest.mock("../providers", () => ({
       })
     ),
   }),
+  getLibraryDb: jest.fn().mockResolvedValue({
+    recordPlay: jest.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 function fireEvent(event: Event, payload?: unknown) {
@@ -43,17 +46,15 @@ describe("usePlayerStore — event mirroring", () => {
 });
 
 describe("usePlayerStore — playTrack", () => {
-  it("loads the full queue in order, skips to the selected track, and plays", async () => {
+  it("places the selected track at index 0 and starts playback", async () => {
     await usePlayerStore
       .getState()
       .playTrack(tracks[1], [tracks[0], tracks[1], tracks[2]]);
 
-    expect(TrackPlayer.setQueue).toHaveBeenCalledWith([
-      expect.objectContaining({ id: tracks[0].id, url: `content://mock/${tracks[0].id}` }),
-      expect.objectContaining({ id: tracks[1].id, url: `content://mock/${tracks[1].id}` }),
-      expect.objectContaining({ id: tracks[2].id, url: `content://mock/${tracks[2].id}` }),
-    ]);
-    expect(TrackPlayer.skip).toHaveBeenCalledWith(1);
+    // The selected track (tracks[1]) is moved to index 0 in the RNTP queue.
+    const setQueueCall = (TrackPlayer.setQueue as jest.Mock).mock.calls.at(-1)[0] as { id: string }[];
+    expect(setQueueCall[0].id).toBe(tracks[1].id);
+    expect(TrackPlayer.skip).toHaveBeenCalledWith(0);
     expect(TrackPlayer.play).toHaveBeenCalled();
   });
 
@@ -167,5 +168,52 @@ describe("usePlayerStore — interruption handling", () => {
     fireEvent(Event.RemoteDuck, { paused: false, permanent: false });
 
     expect(TrackPlayer.play).not.toHaveBeenCalled();
+  });
+});
+describe("usePlayerStore — shuffle", () => {
+  it("starts with shuffleEnabled = false", () => {
+    expect(usePlayerStore.getState().shuffleEnabled).toBe(false);
+  });
+
+  it("toggleShuffle toggles shuffleEnabled on then off", () => {
+    usePlayerStore.getState().toggleShuffle();
+    expect(usePlayerStore.getState().shuffleEnabled).toBe(true);
+
+    usePlayerStore.getState().toggleShuffle();
+    expect(usePlayerStore.getState().shuffleEnabled).toBe(false);
+  });
+
+  it("when shuffle is enabled, the selected track is always at index 0 in the queue", async () => {
+    // Enable shuffle first
+    if (!usePlayerStore.getState().shuffleEnabled) {
+      usePlayerStore.getState().toggleShuffle();
+    }
+
+    await usePlayerStore
+      .getState()
+      .playTrack(tracks[2], [tracks[0], tracks[1], tracks[2]]);
+
+    // tracks[2] must be first
+    expect(usePlayerStore.getState().queue[0].id).toBe(tracks[2].id);
+    // RNTP always skips to index 0
+    expect(TrackPlayer.skip).toHaveBeenCalledWith(0);
+
+    // Clean up
+    usePlayerStore.getState().toggleShuffle();
+  });
+
+  it("when shuffle is disabled, the queue retains its original order with selected track first", async () => {
+    if (usePlayerStore.getState().shuffleEnabled) {
+      usePlayerStore.getState().toggleShuffle();
+    }
+
+    await usePlayerStore
+      .getState()
+      .playTrack(tracks[0], [tracks[0], tracks[1], tracks[2]]);
+
+    const q = usePlayerStore.getState().queue;
+    expect(q[0].id).toBe(tracks[0].id);
+    expect(q[1].id).toBe(tracks[1].id);
+    expect(q[2].id).toBe(tracks[2].id);
   });
 });

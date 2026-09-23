@@ -47,6 +47,13 @@ export interface LibraryDb {
     trackId: string,
     data: { reccobeatsId: string } & AudioFeatures
   ): Promise<void>;
+  /** Record that trackId was played right now. Fire-and-forget safe. */
+  recordPlay(trackId: string): Promise<void>;
+  /**
+   * Return a map of trackId → play count for plays that occurred at or after
+   * `sinceEpoch` (Unix seconds). Tracks with zero plays are omitted.
+   */
+  getPlayCounts(sinceEpoch: number): Promise<Map<string, number>>;
 }
 
 const SCHEMA = `
@@ -103,9 +110,16 @@ CREATE TABLE IF NOT EXISTS lyrics (
   instrumental  INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS idx_tracks_album  ON tracks(album_id);
-CREATE INDEX IF NOT EXISTS idx_tracks_artist ON tracks(artist_id);
-CREATE INDEX IF NOT EXISTS idx_tracks_title  ON tracks(title);
+CREATE TABLE IF NOT EXISTS play_history (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  track_id   TEXT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+  played_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_tracks_album      ON tracks(album_id);
+CREATE INDEX IF NOT EXISTS idx_tracks_artist     ON tracks(artist_id);
+CREATE INDEX IF NOT EXISTS idx_tracks_title      ON tracks(title);
+CREATE INDEX IF NOT EXISTS idx_play_history_time ON play_history(played_at);
 `;
 
 interface TrackRow {
@@ -441,6 +455,28 @@ export async function openLibrary(): Promise<LibraryDb> {
         data.tempo,
         trackId
       );
+    },
+
+    async recordPlay(trackId) {
+      await db.runAsync(
+        `INSERT INTO play_history (track_id) VALUES (?)`,
+        trackId
+      );
+    },
+
+    async getPlayCounts(sinceEpoch) {
+      const rows = await db.getAllAsync<{ track_id: string; cnt: number }>(
+        `SELECT track_id, COUNT(*) AS cnt
+         FROM play_history
+         WHERE played_at >= ?
+         GROUP BY track_id`,
+        sinceEpoch
+      );
+      const map = new Map<string, number>();
+      for (const row of rows) {
+        map.set(row.track_id, row.cnt);
+      }
+      return map;
     },
   };
 }

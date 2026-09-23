@@ -2,6 +2,7 @@ import { create } from "zustand";
 import TrackPlayer, { Event, RepeatMode, State } from "react-native-track-player";
 import type { Track } from "@aura/types";
 import { getProvider } from "../providers";
+import { getLibraryDb } from "../providers";
 import { toRNTPTrack } from "../audio/trackMapper";
 
 export type RepeatModeSetting = "off" | "all" | "one";
@@ -20,6 +21,7 @@ interface PlayerState {
   isPlaying: boolean;
   positionSec: number;
   repeatMode: RepeatModeSetting;
+  shuffleEnabled: boolean;
   playTrack: (track: Track, queue?: Track[]) => void;
   togglePlayPause: () => void;
   playNext: () => void;
@@ -28,6 +30,7 @@ interface PlayerState {
   seekTo: (sec: number) => void;
   stop: () => void;
   cycleRepeatMode: () => void;
+  toggleShuffle: () => void;
 }
 
 /**
@@ -36,6 +39,18 @@ interface PlayerState {
  * real Track (with quality, album, etc.) for the store to expose.
  */
 const trackById = new Map<string, Track>();
+
+/**
+ * Fisher-Yates in-place shuffle. Returns the same array.
+ * Does NOT move the element at index 0 (the currently-selected track).
+ */
+function shuffleFromIndex1<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 1; i--) {
+    const j = 1 + Math.floor(Math.random() * i); // 1..i
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
   TrackPlayer.addEventListener(Event.PlaybackState, (event: { state: State }) => {
@@ -82,10 +97,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     isPlaying: false,
     positionSec: 0,
     repeatMode: "off",
+    shuffleEnabled: false,
 
     playTrack: async (track, queue) => {
       pausedByInterruption = false;
-      const nextQueue = queue ?? get().queue;
+      let nextQueue = queue ? [...queue] : [...get().queue];
+
+      // Place the selected track at position 0, then shuffle the rest.
+      const targetIdx = nextQueue.findIndex((t) => t.id === track.id);
+      if (targetIdx > 0) {
+        [nextQueue[0], nextQueue[targetIdx]] = [nextQueue[targetIdx], nextQueue[0]];
+      } else if (targetIdx < 0) {
+        nextQueue = [track, ...nextQueue];
+      }
+      if (get().shuffleEnabled) shuffleFromIndex1(nextQueue);
+
       set({ queue: nextQueue });
 
       const provider = await getProvider();
@@ -98,9 +124,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       );
 
       await TrackPlayer.setQueue(rntpTracks);
-      const index = nextQueue.findIndex((queuedTrack) => queuedTrack.id === track.id);
-      await TrackPlayer.skip(index >= 0 ? index : 0);
+      await TrackPlayer.skip(0);
       await TrackPlayer.play();
+
+      // Fire-and-forget: record the play. Never blocks playback.
+      void getLibraryDb().then((db) => db.recordPlay(track.id)).catch(() => undefined);
     },
 
     togglePlayPause: async () => {
@@ -143,6 +171,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         REPEAT_CYCLE[(REPEAT_CYCLE.indexOf(current) + 1) % REPEAT_CYCLE.length];
       set({ repeatMode: next });
       await TrackPlayer.setRepeatMode(NATIVE_REPEAT_MODE[next]);
+    },
+
+    toggleShuffle: () => {
+      set((s) => ({ shuffleEnabled: !s.shuffleEnabled }));
     },
   };
 });
