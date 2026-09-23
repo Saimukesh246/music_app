@@ -30,6 +30,8 @@ interface PlayerState {
   playNext: () => void;
   playPrevious: () => void;
   addToQueue: (track: Track) => void;
+  removeFromQueue: (index: number) => Promise<void>;
+  clearUpcomingQueue: () => Promise<void>;
   seekTo: (sec: number) => void;
   stop: () => void;
   cycleRepeatMode: () => void;
@@ -215,6 +217,41 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         uri = source.uri;
       }
       await TrackPlayer.add(toRNTPTrack(track, uri));
+    },
+
+    removeFromQueue: async (index) => {
+      const q = [...get().queue];
+      if (index < 0 || index >= q.length) return;
+      q.splice(index, 1);
+      set({ queue: q });
+      try {
+        await TrackPlayer.remove(index);
+      } catch {
+        // Safe fallback
+      }
+    },
+
+    clearUpcomingQueue: async () => {
+      const current = get().currentTrack;
+      if (!current) {
+        await get().stop();
+        return;
+      }
+      const currentIdx = get().queue.findIndex((t) => t.id === current.id);
+      if (currentIdx >= 0) {
+        const nextQueue = [get().queue[currentIdx]];
+        set({ queue: nextQueue });
+        try {
+          const rntpQueue = await TrackPlayer.getQueue();
+          for (let i = rntpQueue.length - 1; i >= 0; i--) {
+            if (i !== currentIdx) {
+              await TrackPlayer.remove(i).catch(() => undefined);
+            }
+          }
+        } catch {
+          // Safe fallback
+        }
+      }
     },
 
     seekTo: async (sec) => {

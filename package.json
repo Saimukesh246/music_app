@@ -3,7 +3,10 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "mobile": "pnpm --filter @aura/mobile start",
-    "test": "pnpm -r test"
+    "test:shared": "npm --prefix packages/shared test",
+    "test:mobile": "npm --prefix apps/mobile test -- --watchAll=false",
+    "test:api": "pytest apps/api",
+    "test:all": "npm run test:shared && npm run test:mobile && npm run test:api",
+    "test": "npm run test:shared && npm run test:mobile"
   }
 }

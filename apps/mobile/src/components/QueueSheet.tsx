@@ -3,7 +3,6 @@ import type { Track } from "@aura/types";
 import { colors, spacing, radii, typography } from "../theme/tokens";
 import { usePlayerStore } from "../store/playerStore";
 import { getQualityLabel } from "./QualityBadge";
-import TrackPlayer from "react-native-track-player";
 
 function formatDuration(sec: number): string {
   if (!sec) return "--:--";
@@ -20,14 +19,13 @@ interface QueueSheetProps {
 export function QueueSheet({ visible, onClose }: QueueSheetProps) {
   const queue = usePlayerStore((s) => s.queue);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
+  const clearUpcomingQueue = usePlayerStore((s) => s.clearUpcomingQueue);
 
-  async function handleRemove(index: number) {
-    try {
-      await TrackPlayer.remove(index);
-    } catch {
-      // RNTP may reject if the index is the active track; swallow gracefully.
-    }
-  }
+  const totalDurationSec = queue.reduce(
+    (acc, t) => acc + (t.quality?.durationSec || 0),
+    0
+  );
 
   function renderItem({ item, index }: { item: Track; index: number }) {
     const isCurrent = item.id === currentTrack?.id;
@@ -36,6 +34,14 @@ export function QueueSheet({ visible, onClose }: QueueSheetProps) {
         style={[styles.row, isCurrent && styles.rowCurrent]}
         testID={`queue-item-${index}`}
       >
+        <Text
+          style={[
+            styles.indexText,
+            isCurrent && { color: colors.accent, fontWeight: "700" },
+          ]}
+        >
+          {isCurrent ? "▶" : `${index + 1}`}
+        </Text>
         <View style={styles.trackInfo}>
           <Text
             style={[typography.body, isCurrent && { color: colors.accent }]}
@@ -52,10 +58,11 @@ export function QueueSheet({ visible, onClose }: QueueSheetProps) {
         </Text>
         {!isCurrent && (
           <Pressable
-            onPress={() => void handleRemove(index)}
+            onPress={() => void removeFromQueue(index)}
             hitSlop={10}
             style={styles.removeBtn}
             accessibilityLabel={`Remove ${item.title} from queue`}
+            testID={`queue-remove-${index}`}
           >
             <Text style={styles.removeIcon}>×</Text>
           </Pressable>
@@ -75,10 +82,32 @@ export function QueueSheet({ visible, onClose }: QueueSheetProps) {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[typography.heading]}>Up Next</Text>
-          <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close queue">
-            <Text style={styles.closeIcon}>✕</Text>
-          </Pressable>
+          <View>
+            <Text style={typography.heading}>Up Next</Text>
+            <Text style={[typography.caption, styles.summaryText]}>
+              {queue.length} track{queue.length === 1 ? "" : "s"} · {formatDuration(totalDurationSec)}
+            </Text>
+          </View>
+          <View style={styles.headerActions}>
+            {queue.length > 1 && (
+              <Pressable
+                onPress={() => void clearUpcomingQueue()}
+                hitSlop={10}
+                style={styles.clearBtn}
+                testID="queue-clear-btn"
+              >
+                <Text style={styles.clearText}>Clear</Text>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={onClose}
+              hitSlop={10}
+              accessibilityLabel="Close queue"
+              style={styles.closeBtn}
+            >
+              <Text style={styles.closeIcon}>✕</Text>
+            </Pressable>
+          </View>
         </View>
 
         {queue.length === 0 ? (
@@ -90,7 +119,7 @@ export function QueueSheet({ visible, onClose }: QueueSheetProps) {
         ) : (
           <FlatList
             data={queue}
-            keyExtractor={(t) => t.id}
+            keyExtractor={(t, idx) => `${t.id}-${idx}`}
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
           />
@@ -115,10 +144,32 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  summaryText: {
+    color: colors.textTertiary,
+    marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  clearBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "#20202c",
+  },
+  clearText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  closeBtn: {
+    padding: 4,
+  },
   closeIcon: {
     fontSize: 18,
     color: colors.textSecondary,
-    paddingHorizontal: spacing.sm,
   },
   listContent: {
     paddingBottom: spacing.xxl,
@@ -134,6 +185,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
     borderRadius: radii.sm,
     marginHorizontal: spacing.xs,
+  },
+  indexText: {
+    width: 24,
+    fontSize: 12,
+    color: colors.textTertiary,
+    textAlign: "center",
   },
   trackInfo: {
     flex: 1,

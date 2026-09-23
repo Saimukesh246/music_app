@@ -160,9 +160,37 @@ export function NowPlayingScreen({ navigation }: Props) {
         <Text style={typography.title} numberOfLines={1}>
           {currentTrack.title}
         </Text>
-        <Text style={typography.body} numberOfLines={1}>
-          {currentTrack.artistName} — {currentTrack.albumTitle}
-        </Text>
+        <View style={styles.artistAlbumRow}>
+          <Pressable
+            onPress={() =>
+              navigation.navigate("ArtistDetail", { artistId: currentTrack.artistId })
+            }
+            hitSlop={8}
+            accessibilityLabel={`View artist ${currentTrack.artistName}`}
+          >
+            <Text
+              style={[typography.body, styles.clickableMetaText]}
+              numberOfLines={1}
+            >
+              {currentTrack.artistName}
+            </Text>
+          </Pressable>
+          <Text style={[typography.body, { color: colors.textTertiary }]}> · </Text>
+          <Pressable
+            onPress={() =>
+              navigation.navigate("AlbumDetail", { albumId: currentTrack.albumId })
+            }
+            hitSlop={8}
+            accessibilityLabel={`View album ${currentTrack.albumTitle}`}
+          >
+            <Text
+              style={[typography.body, styles.clickableMetaText]}
+              numberOfLines={1}
+            >
+              {currentTrack.albumTitle}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.badgeRow}>
@@ -469,5 +497,14 @@ const styles = StyleSheet.create({
   sheetCloseText: {
     ...typography.bodySecondary,
     color: colors.textTertiary,
+  },
+  artistAlbumRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  clickableMetaText: {
+    color: colors.textSecondary,
+    textDecorationLine: "underline",
+    textDecorationColor: "#444",
   },
 });
